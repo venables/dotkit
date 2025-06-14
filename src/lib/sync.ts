@@ -44,7 +44,7 @@ function appendMissingVariables(
   if (dryRun || missingKeys.length === 0) return
 
   const lines = missingKeys.map((k) => `${k}=${getValueForKey(k, defaults)}`)
-  writeFileSync(envPath, `\n# Added by dotkit\n${lines.join("\n")}\n`, {
+  writeFileSync(envPath, `\n${lines.join("\n")}\n`, {
     flag: "a"
   })
 }

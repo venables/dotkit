@@ -3,8 +3,8 @@ import { readFileSync, writeFileSync, unlinkSync, existsSync } from "node:fs"
 import { syncDotenv } from "./sync.js"
 
 describe("syncDotenv", () => {
-  const testEnvPath = ".env.test"
-  const testExamplePath = ".env.example.test"
+  const testEnvPath = ".env.sync.test"
+  const testExamplePath = ".env.example.sync.test"
 
   beforeEach(() => {
     // Clean up any existing test files
@@ -71,7 +71,6 @@ describe("syncDotenv", () => {
 
     const envContent = readFileSync(testEnvPath, "utf8")
     expect(envContent).toContain("API_KEY=my_key")
-    expect(envContent).toContain("# Added by dotkit")
     expect(envContent).toContain("DB_URL=postgres://localhost")
     expect(envContent).toContain("DEBUG=true")
   })
@@ -93,7 +92,6 @@ describe("syncDotenv", () => {
     expect(result.missingKeys).toEqual(["API_KEY", "DB_URL"])
 
     const envContent = readFileSync(testEnvPath, "utf8")
-    expect(envContent).toContain("# Added by dotkit")
     expect(envContent).toContain("API_KEY=example_key")
     expect(envContent).toContain("DB_URL=postgres://localhost")
   })
