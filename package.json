@@ -1,0 +1,31 @@
+{
+  "name": "dotenv-setup",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint .",
+    "format": "prettier --write .",
+    "check-format": "prettier --check .",
+    "check": "pnpm run check-format && pnpm run lint && pnpm run typecheck",
+    "fix": "prettier --write . && oxlint --fix .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.1",
+  "devDependencies": {
+    "oxlint": "^1.1.0",
+    "prettier": "^3.5.3",
+    "prettier-plugin-packagejson": "^2.5.15",
+    "tsdown": "^0.2.0",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "typescript/no-unused-vars": "error",
+    "eslint/no-console": "warn"
+  },
+  "env": {
+    "node": true,
+    "es2022": true
+  }
+}
