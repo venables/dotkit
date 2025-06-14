@@ -14,7 +14,7 @@ pnpm install
 pnpm test
 
 # Run single test file
-pnpm test src/lib/envsync.test.ts
+pnpm test src/lib/sync.test.ts
 
 # Build the CLI tool
 pnpm build
@@ -31,32 +31,72 @@ pnpm run lint          # Run oxlint + publint
 pnpm run typecheck     # TypeScript type checking
 ```
 
+## Usage Examples
+
+```bash
+# Sync variables from .env.example to .env
+dotkit sync
+
+# Sync with custom paths
+dotkit sync --from .env.local.example --env .env.local
+
+# Sync only specific variables
+dotkit sync --only API_KEY DB_URL
+
+# Just sync variables from template
+dotkit sync
+
+# Generate random values for variables
+dotkit generate AUTH_SECRET JWT_SECRET SESSION_KEY
+
+# Generate to a specific file
+dotkit generate AUTH_SECRET --env .env.local
+
+# Dry run to see what would happen
+dotkit sync --dry-run
+dotkit generate AUTH_SECRET --dry-run
+```
+
 ## Architecture
 
-This is a TypeScript CLI tool that syncs environment variables between source/template files (like `.env.example`) and actual environment files (like `.env`).
+This is a TypeScript CLI toolkit that provides commands for managing environment variables and dotenv files. It can sync variables between template files (like `.env.example`) and actual environment files (like `.env`), as well as generate random values for secrets.
 
 ### Core Components
 
 **Entry Point (`src/index.ts`)**
 
-- CLI interface using Commander.js
-- Parses options: `--env`, `--from`, `--only`, `--generate`, `--generate-only`, `--dry-run`
+- CLI interface using Commander.js with subcommands
+- **`sync` command**: Syncs environment variables from template to .env file
+  - Options: `--env`, `--from`, `--only`, `--dry-run`
+- **`generate` command**: Generates random hex values for specific environment variables
+  - Arguments: variable names to generate
+  - Options: `--env`, `--dry-run`
 - Handles output formatting for different modes (normal vs dry-run)
 - Error handling and process exit codes
 
-**Core Logic (`src/lib/sync.ts`)**
+**Core Logic**
 
-- `setupEnv()` - Main function with two operation modes:
+**`src/lib/common.ts`** - Shared utilities and types:
+
+- `generateRandomHex()` - Creates 64-character random hex values using Node.js crypto
+- `getValueForKey()` - Gets variable value from template
+- `SyncOptions`, `GenerateOptions`, and `SetupResult` interfaces
+
+**`src/lib/sync.ts`** - Sync command logic:
+
+- `syncDotenv()` - Main sync function with two operation modes:
   1. **Bootstrap mode**: Creates new .env file when none exists
   2. **Sync mode**: Appends missing variables to existing .env file
-- Helper functions with single responsibilities:
-  - `getKeysToProcess()` - Filters variables based on --only, --generate, --generate-only options
-  - `getValueForKey()` - Determines if a variable should be generated or copied from template
-  - `generateRandomHex()` - Creates 64-character random hex values using Node.js crypto
-  - `bootstrapEnvFile()` - Creates new .env files
-  - `appendMissingVariables()` - Adds missing vars to existing files
-- Uses `dotenv` package for parsing environment files
-- Uses Node.js `crypto.randomBytes()` for secure random generation
+- `getKeysToProcess()` - Filters variables based on --only option
+- `bootstrapEnvFile()` - Creates new .env files
+- `appendMissingVariables()` - Adds missing vars to existing files
+
+**`src/lib/generate.ts`** - Generate command logic:
+
+- `generateVariables()` - Simple function to generate random hex values for specified variables
+- Handles both new file creation and appending to existing files
+
+All modules use `dotenv` package for parsing environment files and Node.js `crypto.randomBytes()` for secure random generation.
 
 ### Key Design Patterns
 
@@ -64,14 +104,14 @@ This is a TypeScript CLI tool that syncs environment variables between source/te
 - **Functional decomposition** - each helper does one thing
 - **Dry-run support** - all file operations respect the dryRun flag
 - **Variable filtering** - `--only` option works in both bootstrap and sync modes
-- **Generation modes** - `--generate` adds to template copying, `--generate-only` replaces it
-- **Orthogonal options** - `--only`, `--generate`, and `--generate-only` can be combined logically
+- **Clean separation** - `sync` only handles template copying, `generate` only handles random value creation
+- **Independent commands** - each command has a single, clear responsibility
 
 ### Test Conventions
 
 - Test descriptions use assertive language: "handles X" not "should handle X"
-- Tests cover both bootstrap and sync modes
-- Tests cover generation modes (`--generate` and `--generate-only`)
+- **`sync.test.ts`** - Tests sync functionality covering both bootstrap and sync modes, variable filtering (`--only`), and dry-run scenarios
+- **`generate.test.ts`** - Tests generate command functionality including file creation, appending, and dry-run mode
 - Tests verify random hex generation produces 64-character values
 - Comprehensive dry-run testing ensures no file modifications
 - Tests clean up temporary files in beforeEach/afterEach hooks

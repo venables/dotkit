@@ -1,7 +1,7 @@
 {
-  "name": "envsync",
+  "name": "dotkit",
   "version": "1.0.0",
-  "description": "A lightweight CLI tool to keep your `.env` and `.env.example` files in sync.",
+  "description": "A powerful CLI toolkit for managing environment variables and dotenv files.",
   "keywords": [
     "dotenv",
     "environment",
@@ -14,7 +14,7 @@
   "author": "Matt Venables <matt@venabl.es>",
   "type": "module",
   "bin": {
-    "envsync": "dist/index.js"
+    "dotkit": "dist/index.js"
   },
   "files": [
     "dist"

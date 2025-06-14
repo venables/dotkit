@@ -1,152 +1,162 @@
-# envsync
+# dotkit
 
-A lightweight CLI tool to keep your `.env` file in sync. Automatically syncs environment variables from your example file (`.env.example`) to your local environment file (`.env`), ensuring you never miss a required configuration.
+A powerful CLI toolkit for managing environment variables and dotenv files.
 
 ## Features
 
-- **Bootstrap**: Creates `.env` from `.env.example` (or any other source file) if it doesn't exist
-- **Sync**: Adds missing environment variables from `.env.example` to existing `.env`
-- **Generate**: Creates random hex values for secrets (perfect for AUTH_SECRET, JWT_SECRET, etc.)
-- **Safe**: Preserves existing values in your `.env` file
-- **Fast**: Lightweight with minimal dependencies
+- **Sync** environment variables from template files (like `.env.example`) to your `.env` files
+- **Generate** random hex values for secrets and authentication tokens
+- **Smart filtering** with `--only` to sync specific variables
+- **Flexible generation** modes to mix template copying with random value generation
+- **Dry-run support** to preview changes before applying them
+- **Bootstrap mode** to create new `.env` files from templates
 
 ## Installation
 
 ```bash
-npm install -g envsync
-```
-
-Or run directly with npx:
-
-```bash
-npx envsync
+npm install -g dotkit
 ```
 
 ## Usage
 
-### Basic Usage
+### Sync Command
 
-Run in your project directory:
-
-```bash
-envsync
-```
-
-This will sync variables from `.env.example` to `.env`.
-
-### Custom Destination File
+Sync environment variables from a template file to your `.env` file:
 
 ```bash
-envsync --env .env.local
+# Basic sync from .env.example to .env
+dotkit sync
+
+# Sync with custom paths
+dotkit sync --from .env.local.example --env .env.local
+
+# Sync only specific variables
+dotkit sync --only API_KEY DB_URL
+
+# Just sync from template (no generation)
+dotkit sync
+
+# Preview changes without modifying files
+dotkit sync --dry-run
 ```
 
-Or for Cloudflare / Wrangler:
+### Generate Command
+
+Generate random hex values for environment variables:
 
 ```bash
-envsync --env .dev.vars
+# Generate random values for multiple variables
+dotkit generate AUTH_SECRET JWT_SECRET SESSION_KEY
+
+# Generate to a specific file
+dotkit generate AUTH_SECRET --env .env.local
+
+# Preview what would be generated
+dotkit generate AUTH_SECRET --dry-run
 ```
 
-### Custom Source File
+## Options
+
+### Sync Command Options
+
+- `-e, --env <path>` - Target .env file (default: `.env`)
+- `-f, --from <path>` - Source template file (default: `.env.example`)
+- `--only <variables...>` - Only sync these specific variables
+- `--dry-run` - Show what would be copied without making changes
+
+### Generate Command Options
+
+- `-e, --env <path>` - Target .env file (default: `.env`)
+- `--dry-run` - Show what would be generated without making changes
+
+## Examples
+
+### Basic Workflow
+
+1. **Create a template file** (`.env.example`):
+
+```env
+API_KEY=your_api_key_here
+DB_URL=postgres://localhost:5432/myapp
+AUTH_SECRET=replace_with_random_value
+JWT_SECRET=replace_with_random_value
+```
+
+2. **Bootstrap your .env file**:
 
 ```bash
-envsync --from .env.local.template
+# First sync template values
+dotkit sync
+
+# Then generate secrets separately
+dotkit generate AUTH_SECRET JWT_SECRET
 ```
 
-### Copy Specific Variables
+This creates `.env` with:
 
-Copy only specific variables from the source file:
+```env
+API_KEY=your_api_key_here
+DB_URL=postgres://localhost:5432/myapp
+AUTH_SECRET=replace_with_random_value
+JWT_SECRET=replace_with_random_value
+
+# Added by dotkit
+AUTH_SECRET=a1b2c3d4e5f6789...  # 64-character random hex
+JWT_SECRET=9f8e7d6c5b4a321...   # 64-character random hex
+```
+
+### Adding New Variables
+
+Add new variables to your `.env.example`:
+
+```env
+API_KEY=your_api_key_here
+DB_URL=postgres://localhost:5432/myapp
+AUTH_SECRET=replace_with_random_value
+JWT_SECRET=replace_with_random_value
+NEW_FEATURE_FLAG=false
+```
+
+Sync only the new variable:
 
 ```bash
-envsync --only \
-  DATABASE_URL \
-  AUTH_SECRET \
-  STRIPE_KEY \
-  WHATEVER_ELSE
+dotkit sync --only NEW_FEATURE_FLAG
 ```
 
-This will only copy the specified variables from `.env.example` to `.env`, ignoring all other variables.
+### Generating Additional Secrets
 
-### Generate Random Values
-
-Generate random hex values for secrets:
+Generate new secrets directly:
 
 ```bash
-# Generate secrets AND copy all other variables from template
-envsync --generate AUTH_SECRET JWT_SECRET SESSION_SECRET
-
-# Generate ONLY these secrets (no template copying)
-envsync --generate-only AUTH_SECRET JWT_SECRET SESSION_SECRET
+dotkit generate SESSION_SECRET CSRF_TOKEN
 ```
-
-This generates 64-character random hex values (equivalent to `openssl rand -hex 32`) for the specified variables. Perfect for secrets that need unique random values.
-
-You can also combine `--generate` with `--only` to copy some variables and generate others:
-
-```bash
-envsync --only DATABASE_URL AUTH_SECRET --generate AUTH_SECRET
-```
-
-This copies `DATABASE_URL` from the source and generates a random value for `AUTH_SECRET`.
-
-### Dry Run
-
-See what would be copied without making any changes:
-
-```bash
-envsync --dry-run
-```
-
-This will show you exactly which variables would be copied or created.
-
-### Options
-
-- `-e, --env <path>`: Target .env file (default: `.env`)
-- `-f, --from <path>`: Source file to sync from (default: `.env.example`)
-- `--only <variables...>`: Only copy these specific variables
-- `--generate <variables...>`: Generate random hex values for these variables (also copies from source)
-- `--generate-only <variables...>`: Generate random hex values for these variables only (no source copying)
-- `--dry-run`: Show what would be copied without making changes
-- `-V, --version`: Show version number
-- `-h, --help`: Show help
 
 ## How It Works
 
-1. **Bootstrap Mode**: If your `.env` file doesn't exist, it creates one by copying the template file
-2. **Sync Mode**: If `.env` exists, it parses both files and appends any missing variables from the template
-3. **Preserves Values**: Your existing `.env` values are never overwritten
+### Bootstrap Mode
 
-## Example
+When your `.env` file doesn't exist, `dotkit sync` creates it from your template file. You can filter which variables to include with `--only`.
 
-Given these files:
+### Sync Mode
 
-**.env.example**
+When your `.env` file exists, `dotkit sync` appends any missing variables from the template. Existing variables in your `.env` file are never modified.
 
-```sh
-API_KEY=your_api_key_here
-DATABASE_URL=postgres://localhost:5432/myapp
-AUTH_SECRET=placeholder_secret
-DEBUG=false
-PORT=3000
-```
+### Generate Mode
 
-**.env** (existing)
+`dotkit generate` creates random hex values for specified variables. It works independently of templates and can create new files or append to existing ones.
 
-```sh
-API_KEY=prod_key_12345
-DATABASE_URL=postgres://prod.example.com/myapp
-```
+### Random Value Generation
 
-Running `envsync --generate-only AUTH_SECRET` will append to `.env`:
+Generated values are 64-character hexadecimal strings created using Node.js `crypto.randomBytes()` for cryptographic security.
 
-```sh
-API_KEY=prod_key_12345
-DATABASE_URL=postgres://prod.example.com/myapp
+## Architecture
 
-# Added by envsync
-AUTH_SECRET=a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
-```
+The toolkit is built with a modular architecture:
 
-The `AUTH_SECRET` gets a randomly generated 64-character hex value, and no other source variables are copied.
+- **`src/lib/common.ts`** - Shared utilities and types
+- **`src/lib/sync.ts`** - Sync command logic and template processing
+- **`src/lib/generate.ts`** - Generate command logic for random values
+- **Entry point** handles CLI parsing and command routing
 
 ## Development
 
@@ -160,15 +170,13 @@ pnpm test
 # Build
 pnpm build
 
-# Lint and format
+# Run all checks (format, lint, typecheck)
 pnpm check
+
+# Auto-fix issues
 pnpm fix
 ```
 
 ## License
 
 MIT
-
----
-
-_Inspired by [sync-dotenv](https://github.com/codeshifu/sync-dotenv), which is a great tool but appears to no longer be actively maintained._

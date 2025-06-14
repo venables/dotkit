@@ -1,64 +1,17 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs"
-import { randomBytes } from "node:crypto"
 import { parse } from "dotenv"
-
-interface SetupOptions {
-  envPath: string
-  templatePath: string
-  variables?: string[]
-  generateVariables?: string[]
-  generateOnlyVariables?: string[]
-  dryRun?: boolean
-}
-
-interface SetupResult {
-  bootstrapped: boolean
-  missingCount: number
-  missingKeys: string[]
-}
-
-function generateRandomHex(): string {
-  return randomBytes(32).toString("hex")
-}
+import { getValueForKey, type SyncOptions, type SetupResult } from "./common.js"
 
 function getKeysToProcess(
   templateParsed: Record<string, string>,
-  variables?: string[],
-  generateVariables?: string[],
-  generateOnlyVariables?: string[]
+  variables?: string[]
 ): string[] {
-  // If generate-only mode, only return those variables
-  if (generateOnlyVariables && generateOnlyVariables.length > 0) {
-    return generateOnlyVariables
-  }
-
-  const allGenerateVars = generateVariables || []
   const allTemplateKeys = Object.keys(templateParsed)
 
-  // Include variables that should be generated (even if not in template)
-  const keysFromGenerate = allGenerateVars.slice()
-
   // Include variables from template (filtered by --only if provided)
-  const keysFromTemplate =
-    variables && variables.length > 0
-      ? variables.filter((key) => allTemplateKeys.includes(key))
-      : allTemplateKeys
-
-  // Combine and deduplicate
-  const allKeys = [...new Set([...keysFromGenerate, ...keysFromTemplate])]
-
-  return allKeys
-}
-
-function getValueForKey(
-  key: string,
-  templateParsed: Record<string, string>,
-  generateVariables?: string[],
-  generateOnlyVariables?: string[]
-): string {
-  const shouldGenerate =
-    generateVariables?.includes(key) || generateOnlyVariables?.includes(key)
-  return shouldGenerate ? generateRandomHex() : templateParsed[key] || ""
+  return variables && variables.length > 0
+    ? variables.filter((key) => allTemplateKeys.includes(key))
+    : allTemplateKeys
 }
 
 function bootstrapEnvFile(
@@ -67,20 +20,13 @@ function bootstrapEnvFile(
   templateParsed: Record<string, string>,
   keysToBootstrap: string[],
   variables?: string[],
-  generateVariables?: string[],
-  generateOnlyVariables?: string[],
   dryRun?: boolean
 ): void {
   if (dryRun) return
 
-  if (
-    (variables && variables.length > 0) ||
-    (generateVariables && generateVariables.length > 0) ||
-    (generateOnlyVariables && generateOnlyVariables.length > 0)
-  ) {
+  if (variables && variables.length > 0) {
     const filteredLines = keysToBootstrap.map(
-      (key) =>
-        `${key}=${getValueForKey(key, templateParsed, generateVariables, generateOnlyVariables)}`
+      (key) => `${key}=${getValueForKey(key, templateParsed)}`
     )
     writeFileSync(envPath, filteredLines.join("\n") + "\n")
     return
@@ -93,42 +39,25 @@ function appendMissingVariables(
   envPath: string,
   missingKeys: string[],
   defaults: Record<string, string>,
-  generateVariables?: string[],
-  generateOnlyVariables?: string[],
   dryRun?: boolean
 ): void {
   if (dryRun || missingKeys.length === 0) return
 
-  const lines = missingKeys.map(
-    (k) =>
-      `${k}=${getValueForKey(k, defaults, generateVariables, generateOnlyVariables)}`
-  )
-  writeFileSync(envPath, `\n# Added by envsync\n${lines.join("\n")}\n`, {
+  const lines = missingKeys.map((k) => `${k}=${getValueForKey(k, defaults)}`)
+  writeFileSync(envPath, `\n# Added by dotkit\n${lines.join("\n")}\n`, {
     flag: "a"
   })
 }
 
-export function setupDotenv(options: SetupOptions): SetupResult {
-  const {
-    envPath,
-    templatePath,
-    variables,
-    generateVariables,
-    generateOnlyVariables,
-    dryRun
-  } = options
+export function syncDotenv(options: SyncOptions): SetupResult {
+  const { envPath, templatePath, variables, dryRun } = options
 
   const templateContent = readFileSync(templatePath, "utf8")
   const templateParsed = parse(templateContent)
 
   // Handle bootstrap case (no .env file exists)
   if (!existsSync(envPath)) {
-    const keysToBootstrap = getKeysToProcess(
-      templateParsed,
-      variables,
-      generateVariables,
-      generateOnlyVariables
-    )
+    const keysToBootstrap = getKeysToProcess(templateParsed, variables)
 
     bootstrapEnvFile(
       envPath,
@@ -136,8 +65,6 @@ export function setupDotenv(options: SetupOptions): SetupResult {
       templateParsed,
       keysToBootstrap,
       variables,
-      generateVariables,
-      generateOnlyVariables,
       dryRun
     )
 
@@ -150,22 +77,10 @@ export function setupDotenv(options: SetupOptions): SetupResult {
 
   // Handle sync case (.env file exists)
   const current = parse(readFileSync(envPath, "utf8"))
-  const availableKeys = getKeysToProcess(
-    templateParsed,
-    variables,
-    generateVariables,
-    generateOnlyVariables
-  )
+  const availableKeys = getKeysToProcess(templateParsed, variables)
   const missingKeys = availableKeys.filter((key) => !(key in current))
 
-  appendMissingVariables(
-    envPath,
-    missingKeys,
-    templateParsed,
-    generateVariables,
-    generateOnlyVariables,
-    dryRun
-  )
+  appendMissingVariables(envPath, missingKeys, templateParsed, dryRun)
 
   return {
     bootstrapped: false,
