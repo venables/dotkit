@@ -10,25 +10,25 @@ program
   .version("1.0.0")
   .option("-e, --env <path>", "target .env file (destination)", ".env")
   .option(
-    "-t, --template <path>",
-    "source template file (e.g., .env.example)",
+    "-f, --from <path>",
+    "source file to sync from (e.g., .env.example)",
     ".env.example"
   )
   .option("--only <variables...>", "only copy these specific variables")
   .option(
     "--generate <variables...>",
-    "generate random hex values for these variables (also copies from template)"
+    "generate random hex values for these variables (also copies from source)"
   )
   .option(
     "--generate-only <variables...>",
-    "generate random hex values for these variables only (no template copying)"
+    "generate random hex values for these variables only (no source copying)"
   )
   .option("--dry-run", "show what would be copied without making changes")
   .parse()
 
-const { env, template, only, generate, generateOnly, dryRun } = program.opts<{
+const { env, from, only, generate, generateOnly, dryRun } = program.opts<{
   env: string
-  template: string
+  from: string
   only?: string[]
   generate?: string[]
   generateOnly?: string[]
@@ -38,7 +38,7 @@ const { env, template, only, generate, generateOnly, dryRun } = program.opts<{
 try {
   const result = setupDotenv({
     envPath: env,
-    templatePath: template,
+    templatePath: from,
     variables: only,
     generateVariables: generate,
     generateOnlyVariables: generateOnly,
@@ -47,7 +47,7 @@ try {
 
   if (dryRun) {
     if (result.bootstrapped) {
-      console.log(`[DRY RUN] Would create ${env} from ${template}`)
+      console.log(`[DRY RUN] Would create ${env} from ${from}`)
       if (result.missingKeys.length > 0) {
         console.log(`[DRY RUN] Would copy these variables:`)
         result.missingKeys.forEach((key) => console.log(`  - ${key}`))
@@ -61,7 +61,7 @@ try {
       result.missingKeys.forEach((key) => console.log(`  - ${key}`))
     }
   } else if (result.bootstrapped) {
-    console.log(`Created ${env} from ${template}`)
+    console.log(`Created ${env} from ${from}`)
   } else if (result.missingCount === 0) {
     console.log("All variables already present – nothing to do.")
   } else {

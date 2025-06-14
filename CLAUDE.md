@@ -33,18 +33,18 @@ pnpm run typecheck     # TypeScript type checking
 
 ## Architecture
 
-This is a TypeScript CLI tool that syncs environment variables between template files (like `.env.example`) and actual environment files (like `.env`).
+This is a TypeScript CLI tool that syncs environment variables between source/template files (like `.env.example`) and actual environment files (like `.env`).
 
 ### Core Components
 
 **Entry Point (`src/index.ts`)**
 
 - CLI interface using Commander.js
-- Parses options: `--env`, `--template`, `--only`, `--generate`, `--generate-only`, `--dry-run`
+- Parses options: `--env`, `--from`, `--only`, `--generate`, `--generate-only`, `--dry-run`
 - Handles output formatting for different modes (normal vs dry-run)
 - Error handling and process exit codes
 
-**Core Logic (`src/lib/envsync.ts`)**
+**Core Logic (`src/lib/sync.ts`)**
 
 - `setupEnv()` - Main function with two operation modes:
   1. **Bootstrap mode**: Creates new .env file when none exists
