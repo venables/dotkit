@@ -13,12 +13,6 @@
   "license": "MIT",
   "author": "Matt Venables <matt@venabl.es>",
   "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
   "bin": {
     "dotenv-setup": "dist/index.js"
   },
