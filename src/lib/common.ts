@@ -11,6 +11,7 @@ export interface GenerateOptions {
   envPath: string
   variables: string[]
   dryRun?: boolean
+  force?: boolean
 }
 
 export interface SetupResult {

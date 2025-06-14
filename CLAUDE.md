@@ -38,7 +38,7 @@ pnpm run typecheck     # TypeScript type checking
 dotkit sync
 
 # Sync with custom paths
-dotkit sync --from .env.local.example --env .env.local
+dotkit sync --source .env.local.example --env-file .env.local
 
 # Sync only specific variables
 dotkit sync --only API_KEY DB_URL
@@ -50,7 +50,13 @@ dotkit sync
 dotkit generate AUTH_SECRET JWT_SECRET SESSION_KEY
 
 # Generate to a specific file
-dotkit generate AUTH_SECRET --env .env.local
+dotkit generate AUTH_SECRET --env-file .env.local
+
+# Force overwrite existing values
+dotkit generate AUTH_SECRET --force
+
+# Use short flags
+dotkit generate AUTH_SECRET -e .env.local -f
 
 # Dry run to see what would happen
 dotkit sync --dry-run
@@ -67,11 +73,12 @@ This is a TypeScript CLI toolkit that provides commands for managing environment
 
 - CLI interface using Commander.js with subcommands
 - **`sync` command**: Syncs environment variables from template to .env file
-  - Options: `--env`, `--from`, `--only`, `--dry-run`
+  - Options: `--env-file`, `--source`, `--only`, `--dry-run`
 - **`generate` command**: Generates random hex values for specific environment variables
   - Arguments: variable names to generate
-  - Options: `--env`, `--dry-run`
+  - Options: `--env-file`, `--force`, `--dry-run`
 - Handles output formatting for different modes (normal vs dry-run)
+- Safe by default: won't overwrite existing values unless `--force` is used
 - Error handling and process exit codes
 
 **Core Logic**
@@ -93,7 +100,9 @@ This is a TypeScript CLI toolkit that provides commands for managing environment
 
 **`src/lib/generate.ts`** - Generate command logic:
 
-- `generateVariables()` - Simple function to generate random hex values for specified variables
+- `generateVariables()` - Generate random hex values for specified variables with smart existing value handling
+- Checks existing .env files and skips variables that already exist (unless `--force` is used)
+- Force mode removes existing values and replaces them with newly generated ones
 - Handles both new file creation and appending to existing files
 
 All modules use `dotenv` package for parsing environment files and Node.js `crypto.randomBytes()` for secure random generation.

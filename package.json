@@ -10,6 +10,10 @@
     "sync",
     "setup"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/venables/dotkit.git"
+  },
   "license": "MIT",
   "author": "Matt Venables <matt@venabl.es>",
   "type": "module",
