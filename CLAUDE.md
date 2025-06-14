@@ -38,7 +38,7 @@ pnpm run typecheck     # TypeScript type checking
 dotkit sync
 
 # Sync with custom paths
-dotkit sync --source .env.local.example --env-file .env.local
+dotkit sync --source .env.local.example --target .env.local
 
 # Sync only specific variables
 dotkit sync --only API_KEY DB_URL
@@ -50,13 +50,13 @@ dotkit sync
 dotkit generate AUTH_SECRET JWT_SECRET SESSION_KEY
 
 # Generate to a specific file
-dotkit generate AUTH_SECRET --env-file .env.local
+dotkit generate AUTH_SECRET --target .env.local
 
 # Force overwrite existing values
 dotkit generate AUTH_SECRET --force
 
 # Use short flags
-dotkit generate AUTH_SECRET -e .env.local -f
+dotkit generate AUTH_SECRET -t .env.local -f
 
 # Dry run to see what would happen
 dotkit sync --dry-run
@@ -73,10 +73,10 @@ This is a TypeScript CLI toolkit that provides commands for managing environment
 
 - CLI interface using Commander.js with subcommands
 - **`sync` command**: Syncs environment variables from template to .env file
-  - Options: `--env-file`, `--source`, `--only`, `--dry-run`
+  - Options: `--target`, `--source`, `--only`, `--dry-run`
 - **`generate` command**: Generates random hex values for specific environment variables
   - Arguments: variable names to generate
-  - Options: `--env-file`, `--force`, `--dry-run`
+  - Options: `--target`, `--force`, `--dry-run`
 - Handles output formatting for different modes (normal vs dry-run)
 - Safe by default: won't overwrite existing values unless `--force` is used
 - Error handling and process exit codes

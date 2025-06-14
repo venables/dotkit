@@ -30,7 +30,7 @@ Sync environment variables from a template file to your `.env` file:
 dotkit sync
 
 # Sync with custom paths
-dotkit sync --source .env.local.example --env-file .env.local
+dotkit sync --source .env.local.example --target .env.local
 
 # Sync only specific variables
 dotkit sync --only API_KEY DB_URL
@@ -51,7 +51,7 @@ Generate random hex values for environment variables:
 dotkit generate AUTH_SECRET JWT_SECRET SESSION_KEY
 
 # Generate to a specific file
-dotkit generate AUTH_SECRET --env-file .env.local
+dotkit generate AUTH_SECRET --target .env.local
 
 # Preview what would be generated
 dotkit generate AUTH_SECRET --dry-run
@@ -60,21 +60,21 @@ dotkit generate AUTH_SECRET --dry-run
 dotkit generate AUTH_SECRET --force
 
 # Use short flags
-dotkit generate AUTH_SECRET -e .env.local -f
+dotkit generate AUTH_SECRET -t .env.local -f
 ```
 
 ## Options
 
 ### Sync Command Options
 
-- `-e, --env-file <path>` - Target .env file (default: `.env`)
+- `-t, --target <path>` - Target .env file (default: `.env`)
 - `-s, --source <path>` - Source template file (default: `.env.example`)
 - `--only <variables...>` - Only sync these specific variables
 - `--dry-run` - Show what would be copied without making changes
 
 ### Generate Command Options
 
-- `-e, --env-file <path>` - Target .env file (default: `.env`)
+- `-t, --target <path>` - Target .env file (default: `.env`)
 - `-f, --force` - Overwrite existing values (default: skip existing)
 - `--dry-run` - Show what would be generated without making changes
 

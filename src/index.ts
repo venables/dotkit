@@ -14,7 +14,7 @@ program
 program
   .command("sync")
   .description("Sync environment variables from template to .env file")
-  .option("-e, --env-file <path>", "target .env file (destination)", ".env")
+  .option("-t, --target <path>", "target .env file (destination)", ".env")
   .option(
     "-s, --source <path>",
     "source file to sync from (e.g., .env.example)",
@@ -24,14 +24,14 @@ program
   .option("--dry-run", "show what would be copied without making changes")
   .action(
     (options: {
-      envFile: string
+      target: string
       source: string
       only?: string[]
       dryRun?: boolean
     }) => {
       try {
         const result = syncDotenv({
-          envPath: options.envFile,
+          envPath: options.target,
           templatePath: options.source,
           variables: options.only,
           dryRun: options.dryRun
@@ -40,7 +40,7 @@ program
         if (options.dryRun) {
           if (result.bootstrapped) {
             console.log(
-              `[DRY RUN] Would create ${options.envFile} from ${options.source}`
+              `[DRY RUN] Would create ${options.target} from ${options.source}`
             )
             if (result.missingKeys.length > 0) {
               console.log(`[DRY RUN] Would copy these variables:`)
@@ -52,17 +52,17 @@ program
             )
           } else {
             console.log(
-              `[DRY RUN] Would append ${result.missingCount} variable(s) to ${options.envFile}:`
+              `[DRY RUN] Would append ${result.missingCount} variable(s) to ${options.target}:`
             )
             result.missingKeys.forEach((key) => console.log(`  - ${key}`))
           }
         } else if (result.bootstrapped) {
-          console.log(`Created ${options.envFile} from ${options.source}`)
+          console.log(`Created ${options.target} from ${options.source}`)
         } else if (result.missingCount === 0) {
           console.log("All variables already present – nothing to do.")
         } else {
           console.log(
-            `Appended ${result.missingCount} variable(s) to ${options.envFile}`
+            `Appended ${result.missingCount} variable(s) to ${options.target}`
           )
         }
       } catch (error) {
@@ -77,17 +77,17 @@ program
   .command("generate")
   .description("Generate random hex values for environment variables")
   .argument("<variables...>", "variable names to generate values for")
-  .option("-e, --env-file <path>", "target .env file", ".env")
+  .option("-t, --target <path>", "target .env file", ".env")
   .option("--dry-run", "show what would be generated without making changes")
   .option("-f, --force", "overwrite existing values")
   .action(
     (
       variables: string[],
-      options: { envFile: string; dryRun?: boolean; force?: boolean }
+      options: { target: string; dryRun?: boolean; force?: boolean }
     ) => {
       try {
         const result = generateVariables({
-          envPath: options.envFile,
+          envPath: options.target,
           variables,
           dryRun: options.dryRun,
           force: options.force
@@ -96,11 +96,11 @@ program
         if (options.dryRun) {
           if (result.bootstrapped) {
             console.log(
-              `[DRY RUN] Would create ${options.envFile} with generated values for: ${variables.join(", ")}`
+              `[DRY RUN] Would create ${options.target} with generated values for: ${variables.join(", ")}`
             )
           } else if (result.missingKeys.length === 0) {
             console.log(
-              `[DRY RUN] All variables already exist in ${options.envFile} – nothing to do.`
+              `[DRY RUN] All variables already exist in ${options.target} – nothing to do.`
             )
             if (!options.force) {
               console.log(
@@ -125,11 +125,11 @@ program
         } else {
           if (result.bootstrapped) {
             console.log(
-              `Created ${options.envFile} with generated values for: ${variables.join(", ")}`
+              `Created ${options.target} with generated values for: ${variables.join(", ")}`
             )
           } else if (result.missingKeys.length === 0) {
             console.log(
-              `All variables already exist in ${options.envFile} – nothing to do.`
+              `All variables already exist in ${options.target} – nothing to do.`
             )
             if (!options.force) {
               console.log(`Use -f or --force to overwrite existing values.`)
