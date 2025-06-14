@@ -1,4 +1,4 @@
-# dotenv-setup
+# envsync
 
 A lightweight CLI tool to keep your `.env` and `.env.example` files in sync. Automatically syncs environment variables from your example file to your local environment file, ensuring you never miss a required configuration.
 
@@ -13,13 +13,13 @@ A lightweight CLI tool to keep your `.env` and `.env.example` files in sync. Aut
 ## Installation
 
 ```bash
-npm install -g dotenv-setup
+npm install -g envsync
 ```
 
 Or run directly with npx:
 
 ```bash
-npx dotenv-setup
+npx envsync
 ```
 
 ## Usage
@@ -29,7 +29,7 @@ npx dotenv-setup
 Run in your project directory:
 
 ```bash
-dotenv-setup
+envsync
 ```
 
 This will sync variables from `.env.example` to `.env`.
@@ -37,7 +37,7 @@ This will sync variables from `.env.example` to `.env`.
 ### Custom Template File
 
 ```bash
-dotenv-setup --template .env.local.template
+envsync --template .env.local.template
 ```
 
 ### Copy Specific Variables
@@ -45,7 +45,7 @@ dotenv-setup --template .env.local.template
 Copy only specific variables from the template file:
 
 ```bash
-dotenv-setup --only \
+envsync --only \
   DATABASE_URL \
   AUTH_SECRET \
   STRIPE_KEY \
@@ -60,10 +60,10 @@ Generate random hex values for secrets:
 
 ```bash
 # Generate secrets AND copy all other variables from template
-dotenv-setup --generate AUTH_SECRET JWT_SECRET SESSION_SECRET
+envsync --generate AUTH_SECRET JWT_SECRET SESSION_SECRET
 
 # Generate ONLY these secrets (no template copying)
-dotenv-setup --generate-only AUTH_SECRET JWT_SECRET SESSION_SECRET
+envsync --generate-only AUTH_SECRET JWT_SECRET SESSION_SECRET
 ```
 
 This generates 64-character random hex values (equivalent to `openssl rand -hex 32`) for the specified variables. Perfect for secrets that need unique random values.
@@ -71,7 +71,7 @@ This generates 64-character random hex values (equivalent to `openssl rand -hex 
 You can also combine `--generate` with `--only` to copy some variables and generate others:
 
 ```bash
-dotenv-setup --only DATABASE_URL AUTH_SECRET --generate AUTH_SECRET
+envsync --only DATABASE_URL AUTH_SECRET --generate AUTH_SECRET
 ```
 
 This copies `DATABASE_URL` from the template and generates a random value for `AUTH_SECRET`.
@@ -81,7 +81,7 @@ This copies `DATABASE_URL` from the template and generates a random value for `A
 See what would be copied without making any changes:
 
 ```bash
-dotenv-setup --dry-run
+envsync --dry-run
 ```
 
 This will show you exactly which variables would be copied or created.
@@ -124,13 +124,13 @@ API_KEY=prod_key_12345
 DATABASE_URL=postgres://prod.example.com/myapp
 ```
 
-Running `dotenv-setup --generate-only AUTH_SECRET` will append to `.env`:
+Running `envsync --generate-only AUTH_SECRET` will append to `.env`:
 
 ```sh
 API_KEY=prod_key_12345
 DATABASE_URL=postgres://prod.example.com/myapp
 
-# Added by dotenv-setup
+# Added by envsync
 AUTH_SECRET=a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
 ```
 

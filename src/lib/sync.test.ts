@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
 import { readFileSync, writeFileSync, unlinkSync, existsSync } from "node:fs"
-import { setupDotenv } from "./dotenv-setup.js"
+import { setupDotenv } from "./sync.js"
 
 describe("setupDotenv", () => {
   const testEnvPath = ".env.test"
@@ -71,7 +71,7 @@ describe("setupDotenv", () => {
 
     const envContent = readFileSync(testEnvPath, "utf8")
     expect(envContent).toContain("API_KEY=my_key")
-    expect(envContent).toContain("# Added by dotenv-setup")
+    expect(envContent).toContain("# Added by envsync")
     expect(envContent).toContain("DB_URL=postgres://localhost")
     expect(envContent).toContain("DEBUG=true")
   })
@@ -93,7 +93,7 @@ describe("setupDotenv", () => {
     expect(result.missingKeys).toEqual(["API_KEY", "DB_URL"])
 
     const envContent = readFileSync(testEnvPath, "utf8")
-    expect(envContent).toContain("# Added by dotenv-setup")
+    expect(envContent).toContain("# Added by envsync")
     expect(envContent).toContain("API_KEY=example_key")
     expect(envContent).toContain("DB_URL=postgres://localhost")
   })

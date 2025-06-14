@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { program } from "commander"
-import { setupDotenv } from "./lib/dotenv-setup.js"
+import { setupDotenv } from "./lib/sync.js"
 
 program
-  .name("dotenv-setup")
+  .name("envsync")
   .description(
     "Sync environment variables from template to .env with optional random generation"
   )

@@ -14,7 +14,7 @@ pnpm install
 pnpm test
 
 # Run single test file
-pnpm test src/lib/dotenv-setup.test.ts
+pnpm test src/lib/envsync.test.ts
 
 # Build the CLI tool
 pnpm build
@@ -44,9 +44,9 @@ This is a TypeScript CLI tool that syncs environment variables between template 
 - Handles output formatting for different modes (normal vs dry-run)
 - Error handling and process exit codes
 
-**Core Logic (`src/lib/dotenv-setup.ts`)**
+**Core Logic (`src/lib/envsync.ts`)**
 
-- `setupDotenv()` - Main function with two operation modes:
+- `setupEnv()` - Main function with two operation modes:
   1. **Bootstrap mode**: Creates new .env file when none exists
   2. **Sync mode**: Appends missing variables to existing .env file
 - Helper functions with single responsibilities:

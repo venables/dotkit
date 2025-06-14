@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs"
 import { randomBytes } from "node:crypto"
 import { parse } from "dotenv"
 
-export interface SetupOptions {
+interface SetupOptions {
   envPath: string
   templatePath: string
   variables?: string[]
@@ -11,7 +11,7 @@ export interface SetupOptions {
   dryRun?: boolean
 }
 
-export interface SetupResult {
+interface SetupResult {
   bootstrapped: boolean
   missingCount: number
   missingKeys: string[]
@@ -103,7 +103,7 @@ function appendMissingVariables(
     (k) =>
       `${k}=${getValueForKey(k, defaults, generateVariables, generateOnlyVariables)}`
   )
-  writeFileSync(envPath, `\n# Added by dotenv-setup\n${lines.join("\n")}\n`, {
+  writeFileSync(envPath, `\n# Added by envsync\n${lines.join("\n")}\n`, {
     flag: "a"
   })
 }

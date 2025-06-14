@@ -1,5 +1,5 @@
 {
-  "name": "dotenv-setup",
+  "name": "envsync",
   "version": "1.0.0",
   "description": "A lightweight CLI tool to keep your `.env` and `.env.example` files in sync.",
   "keywords": [
@@ -14,7 +14,7 @@
   "author": "Matt Venables <matt@venabl.es>",
   "type": "module",
   "bin": {
-    "dotenv-setup": "dist/index.js"
+    "envsync": "dist/index.js"
   },
   "files": [
     "dist"
