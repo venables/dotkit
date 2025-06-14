@@ -1,31 +1,54 @@
 {
   "name": "dotenv-setup",
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "description": "A lightweight CLI tool to keep your `.env` and `.env.example` files in sync.",
+  "keywords": [
+    "dotenv",
+    "environment",
+    "variables",
+    "template",
+    "sync",
+    "setup"
+  ],
+  "license": "MIT",
+  "author": "Matt Venables <matt@venabl.es>",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "dotenv-setup": "dist/index.js"
+  },
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit",
-    "lint": "oxlint .",
-    "format": "prettier --write .",
-    "check-format": "prettier --check .",
     "check": "pnpm run check-format && pnpm run lint && pnpm run typecheck",
+    "check-format": "prettier --check .",
     "fix": "prettier --write . && oxlint --fix .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "format": "prettier --write .",
+    "lint": "oxlint . && publint",
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.12.1",
+  "dependencies": {
+    "commander": "^14.0.0",
+    "dotenv": "^16.5.0"
+  },
   "devDependencies": {
+    "@types/node": "^24.0.1",
     "oxlint": "^1.1.0",
     "prettier": "^3.5.3",
     "prettier-plugin-packagejson": "^2.5.15",
+    "publint": "^0.3.12",
     "tsdown": "^0.2.0",
-    "typescript": "^5"
-  }
+    "typescript": "^5",
+    "vitest": "^3.2.3"
+  },
+  "packageManager": "pnpm@10.12.1"
 }
