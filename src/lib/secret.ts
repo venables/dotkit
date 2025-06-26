@@ -6,8 +6,14 @@ import {
   type SetupResult
 } from "./common.js"
 
-export function generateVariables(options: GenerateOptions): SetupResult {
-  const { envPath, variables, dryRun, force } = options
+interface DetailedGenerateResult extends SetupResult {
+  missingKeyValues?: Record<string, string>
+}
+
+export function generateVariables(
+  options: GenerateOptions
+): DetailedGenerateResult {
+  const { envPath, variables, length = 32, dryRun, force } = options
 
   const bootstrapped = !existsSync(envPath)
   let existingKeys: string[] = []
@@ -27,7 +33,7 @@ export function generateVariables(options: GenerateOptions): SetupResult {
 
   if (!dryRun && variablesToGenerate.length > 0) {
     const lines = variablesToGenerate.map(
-      (key) => `${key}=${generateRandomHex()}`
+      (key) => `${key}="${generateRandomHex(length)}"`
     )
 
     if (bootstrapped) {
@@ -67,9 +73,19 @@ export function generateVariables(options: GenerateOptions): SetupResult {
     }
   }
 
+  // Generate sample values for dry-run display
+  const missingKeyValues = variablesToGenerate.reduce(
+    (acc, key) => {
+      acc[key] = generateRandomHex(length)
+      return acc
+    },
+    {} as Record<string, string>
+  )
+
   return {
     bootstrapped,
     missingCount: variablesToGenerate.length,
-    missingKeys: variablesToGenerate
+    missingKeys: variablesToGenerate,
+    missingKeyValues
   }
 }

@@ -47,20 +47,26 @@ dotkit sync --only API_KEY DB_URL
 dotkit sync
 
 # Generate random values for variables
-dotkit generate AUTH_SECRET JWT_SECRET SESSION_KEY
+dotkit secret AUTH_SECRET JWT_SECRET SESSION_KEY
 
 # Generate to a specific file
-dotkit generate AUTH_SECRET --target .env.local
+dotkit secret AUTH_SECRET --target .env.local
+
+# Generate with custom length (in bytes)
+dotkit secret AUTH_SECRET --length 16
 
 # Force overwrite existing values
-dotkit generate AUTH_SECRET --force
+dotkit secret AUTH_SECRET --force
 
 # Use short flags
-dotkit generate AUTH_SECRET -t .env.local -f
+dotkit secret AUTH_SECRET -t .env.local -l 16 -f
+
+# Deprecated aliases (use secret instead)
+dotkit generate AUTH_SECRET --length 16
 
 # Dry run to see what would happen
 dotkit sync --dry-run
-dotkit generate AUTH_SECRET --dry-run
+dotkit secret AUTH_SECRET --dry-run
 ```
 
 ## Architecture
@@ -74,9 +80,10 @@ This is a TypeScript CLI toolkit that provides commands for managing environment
 - CLI interface using Commander.js with subcommands
 - **`sync` command**: Syncs environment variables from template to .env file
   - Options: `--target`, `--source`, `--only`, `--dry-run`
-- **`generate` command**: Generates random hex values for specific environment variables
+- **`secret` command**: Generates random hex values for specific environment variables
   - Arguments: variable names to generate
-  - Options: `--target`, `--force`, `--dry-run`
+  - Options: `--target`, `--length`, `--force`, `--dry-run`
+- **`generate` command**: Deprecated alias for `secret`
 - Handles output formatting for different modes (normal vs dry-run)
 - Safe by default: won't overwrite existing values unless `--force` is used
 - Error handling and process exit codes
@@ -98,9 +105,9 @@ This is a TypeScript CLI toolkit that provides commands for managing environment
 - `bootstrapEnvFile()` - Creates new .env files
 - `appendMissingVariables()` - Adds missing vars to existing files
 
-**`src/lib/generate.ts`** - Generate command logic:
+**`src/lib/secret.ts`** - Secret command logic:
 
-- `generateVariables()` - Generate random hex values for specified variables with smart existing value handling
+- `generateVariables()` - Generate random hex values for specified variables with smart existing value handling (supports custom length parameter)
 - Checks existing .env files and skips variables that already exist (unless `--force` is used)
 - Force mode removes existing values and replaces them with newly generated ones
 - Handles both new file creation and appending to existing files
@@ -120,7 +127,7 @@ All modules use `dotenv` package for parsing environment files and Node.js `cryp
 
 - Test descriptions use assertive language: "handles X" not "should handle X"
 - **`sync.test.ts`** - Tests sync functionality covering both bootstrap and sync modes, variable filtering (`--only`), and dry-run scenarios
-- **`generate.test.ts`** - Tests generate command functionality including file creation, appending, and dry-run mode
+- **`secret.test.ts`** - Tests secret command functionality including file creation, appending, length parameter, and dry-run mode
 - Tests verify random hex generation produces 64-character values
 - Comprehensive dry-run testing ensures no file modifications
 - Tests clean up temporary files in beforeEach/afterEach hooks

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
 import { readFileSync, writeFileSync, unlinkSync, existsSync } from "node:fs"
-import { generateVariables } from "./generate.js"
+import { generateVariables } from "./secret.js"
 
 describe("generateVariables", () => {
   const testEnvPath = ".env.generate.test"
@@ -27,8 +27,8 @@ describe("generateVariables", () => {
     expect(existsSync(testEnvPath)).toBe(true)
 
     const envContent = readFileSync(testEnvPath, "utf8")
-    const authSecretMatch = envContent.match(/AUTH_SECRET=([a-f0-9]{64})/)
-    const jwtSecretMatch = envContent.match(/JWT_SECRET=([a-f0-9]{64})/)
+    const authSecretMatch = envContent.match(/AUTH_SECRET="([a-f0-9]{64})"/)
+    const jwtSecretMatch = envContent.match(/JWT_SECRET="([a-f0-9]{64})"/)
     expect(authSecretMatch).toBeTruthy()
     expect(jwtSecretMatch).toBeTruthy()
     expect(authSecretMatch![1]).not.toBe(jwtSecretMatch![1]) // Different values
@@ -49,7 +49,7 @@ describe("generateVariables", () => {
     const envContent = readFileSync(testEnvPath, "utf8")
     expect(envContent).toContain("API_KEY=existing_key")
 
-    const authSecretMatch = envContent.match(/AUTH_SECRET=([a-f0-9]{64})/)
+    const authSecretMatch = envContent.match(/AUTH_SECRET="([a-f0-9]{64})"/)
     expect(authSecretMatch).toBeTruthy()
   })
 
@@ -98,9 +98,9 @@ describe("generateVariables", () => {
     expect(result.missingKeys).toEqual(["SECRET_1", "SECRET_2", "SECRET_3"])
 
     const envContent = readFileSync(testEnvPath, "utf8")
-    const secret1Match = envContent.match(/SECRET_1=([a-f0-9]{64})/)
-    const secret2Match = envContent.match(/SECRET_2=([a-f0-9]{64})/)
-    const secret3Match = envContent.match(/SECRET_3=([a-f0-9]{64})/)
+    const secret1Match = envContent.match(/SECRET_1="([a-f0-9]{64})"/)
+    const secret2Match = envContent.match(/SECRET_2="([a-f0-9]{64})"/)
+    const secret3Match = envContent.match(/SECRET_3="([a-f0-9]{64})"/)
 
     expect(secret1Match).toBeTruthy()
     expect(secret2Match).toBeTruthy()
@@ -131,7 +131,7 @@ describe("generateVariables", () => {
     expect(envContent).toContain("AUTH_SECRET=existing_secret") // Original value preserved
     expect(envContent).toContain("API_KEY=existing_key")
     expect(envContent).toContain("NEW_SECRET=")
-    expect(envContent).toMatch(/NEW_SECRET=[a-f0-9]{64}/)
+    expect(envContent).toMatch(/NEW_SECRET="[a-f0-9]{64}"/)
   })
 
   it("overwrites existing variables with --force flag", () => {
@@ -153,8 +153,8 @@ describe("generateVariables", () => {
     const envContent = readFileSync(testEnvPath, "utf8")
     expect(envContent).not.toContain("AUTH_SECRET=existing_secret") // Original value should be gone
     expect(envContent).toContain("API_KEY=existing_key") // Unrelated values preserved
-    expect(envContent).toMatch(/AUTH_SECRET=[a-f0-9]{64}/) // New value generated
-    expect(envContent).toMatch(/NEW_SECRET=[a-f0-9]{64}/)
+    expect(envContent).toMatch(/AUTH_SECRET="[a-f0-9]{64}"/) // New value generated
+    expect(envContent).toMatch(/NEW_SECRET="[a-f0-9]{64}"/)
   })
 
   it("dry run shows existing variables would be skipped", () => {
@@ -209,5 +209,42 @@ describe("generateVariables", () => {
     // File should be unchanged
     const envContent = readFileSync(testEnvPath, "utf8")
     expect(envContent).toBe("AUTH_SECRET=existing_secret")
+  })
+
+  it("generates values with custom length", () => {
+    const result = generateVariables({
+      envPath: testEnvPath,
+      variables: ["SHORT_SECRET", "LONG_SECRET"],
+      length: 16 // 16 bytes = 32 hex characters
+    })
+
+    expect(result.bootstrapped).toBe(true)
+    expect(result.missingCount).toBe(2)
+    expect(result.missingKeys).toEqual(["SHORT_SECRET", "LONG_SECRET"])
+
+    const envContent = readFileSync(testEnvPath, "utf8")
+    const shortSecretMatch = envContent.match(/SHORT_SECRET="([a-f0-9]{32})"/)
+    const longSecretMatch = envContent.match(/LONG_SECRET="([a-f0-9]{32})"/)
+    expect(shortSecretMatch).toBeTruthy()
+    expect(longSecretMatch).toBeTruthy()
+    expect(shortSecretMatch![1]).not.toBe(longSecretMatch![1]) // Different values
+  })
+
+  it("generates values with default length when not specified", () => {
+    const result = generateVariables({
+      envPath: testEnvPath,
+      variables: ["DEFAULT_SECRET"]
+    })
+
+    expect(result.bootstrapped).toBe(true)
+    expect(result.missingCount).toBe(1)
+    expect(result.missingKeys).toEqual(["DEFAULT_SECRET"])
+
+    const envContent = readFileSync(testEnvPath, "utf8")
+    // Default is 32 bytes = 64 hex characters
+    const defaultSecretMatch = envContent.match(
+      /DEFAULT_SECRET="([a-f0-9]{64})"/
+    )
+    expect(defaultSecretMatch).toBeTruthy()
   })
 })

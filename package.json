@@ -29,6 +29,7 @@
     "build": "tsdown",
     "check": "pnpm run check-format && pnpm run lint && pnpm run typecheck",
     "check-format": "prettier --check .",
+    "dev": "tsx ./src/index.ts",
     "fix": "prettier --write . && oxlint --fix .",
     "format": "prettier --write .",
     "lint": "oxlint . && publint",
@@ -47,6 +48,7 @@
     "prettier-plugin-packagejson": "^2.5.15",
     "publint": "^0.3.12",
     "tsdown": "^0.12.7",
+    "tsx": "^4.20.3",
     "typescript": "^5",
     "vitest": "^3.2.3"
   },

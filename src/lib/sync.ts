@@ -2,6 +2,10 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs"
 import { parse } from "dotenv"
 import { getValueForKey, type SyncOptions, type SetupResult } from "./common.js"
 
+interface DetailedSetupResult extends SetupResult {
+  missingKeyValues?: Record<string, string>
+}
+
 function getKeysToProcess(
   templateParsed: Record<string, string>,
   variables?: string[]
@@ -26,12 +30,13 @@ function bootstrapEnvFile(
 
   if (variables && variables.length > 0) {
     const filteredLines = keysToBootstrap.map(
-      (key) => `${key}=${getValueForKey(key, templateParsed)}`
+      (key) => `${key}="${getValueForKey(key, templateParsed)}"`
     )
     writeFileSync(envPath, filteredLines.join("\n") + "\n")
     return
   }
 
+  // Copy template content as-is without modifying existing format
   writeFileSync(envPath, templateContent)
 }
 
@@ -43,13 +48,13 @@ function appendMissingVariables(
 ): void {
   if (dryRun || missingKeys.length === 0) return
 
-  const lines = missingKeys.map((k) => `${k}=${getValueForKey(k, defaults)}`)
+  const lines = missingKeys.map((k) => `${k}="${getValueForKey(k, defaults)}"`)
   writeFileSync(envPath, `\n${lines.join("\n")}\n`, {
     flag: "a"
   })
 }
 
-export function syncDotenv(options: SyncOptions): SetupResult {
+export function syncDotenv(options: SyncOptions): DetailedSetupResult {
   const { envPath, templatePath, variables, dryRun } = options
 
   const templateContent = readFileSync(templatePath, "utf8")
@@ -68,10 +73,19 @@ export function syncDotenv(options: SyncOptions): SetupResult {
       dryRun
     )
 
+    const missingKeyValues = keysToBootstrap.reduce(
+      (acc, key) => {
+        acc[key] = getValueForKey(key, templateParsed)
+        return acc
+      },
+      {} as Record<string, string>
+    )
+
     return {
       bootstrapped: true,
       missingCount: keysToBootstrap.length,
-      missingKeys: keysToBootstrap
+      missingKeys: keysToBootstrap,
+      missingKeyValues
     }
   }
 
@@ -82,9 +96,18 @@ export function syncDotenv(options: SyncOptions): SetupResult {
 
   appendMissingVariables(envPath, missingKeys, templateParsed, dryRun)
 
+  const missingKeyValues = missingKeys.reduce(
+    (acc, key) => {
+      acc[key] = getValueForKey(key, templateParsed)
+      return acc
+    },
+    {} as Record<string, string>
+  )
+
   return {
     bootstrapped: false,
     missingCount: missingKeys.length,
-    missingKeys
+    missingKeys,
+    missingKeyValues
   }
 }

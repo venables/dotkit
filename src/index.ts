@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { program } from "commander"
+import { generateVariables } from "./lib/secret.js"
 import { syncDotenv } from "./lib/sync.js"
-import { generateVariables } from "./lib/generate.js"
 
 program
   .name("dotkit")
@@ -44,7 +44,10 @@ program
             )
             if (result.missingKeys.length > 0) {
               console.log(`[DRY RUN] Would copy these variables:`)
-              result.missingKeys.forEach((key) => console.log(`  - ${key}`))
+              result.missingKeys.forEach((key) => {
+                const value = result.missingKeyValues?.[key] || ""
+                console.log(`  ${key}="${value}"`)
+              })
             }
           } else if (result.missingCount === 0) {
             console.log(
@@ -54,7 +57,10 @@ program
             console.log(
               `[DRY RUN] Would append ${result.missingCount} variable(s) to ${options.target}:`
             )
-            result.missingKeys.forEach((key) => console.log(`  - ${key}`))
+            result.missingKeys.forEach((key) => {
+              const value = result.missingKeyValues?.[key] || ""
+              console.log(`  ${key}="${value}"`)
+            })
           }
         } else if (result.bootstrapped) {
           console.log(`Created ${options.target} from ${options.source}`)
@@ -72,23 +78,31 @@ program
     }
   )
 
-// Generate command
+// Secret command
 program
-  .command("generate")
+  .command("secret")
+  .alias("generate")
   .description("Generate random hex values for environment variables")
   .argument("<variables...>", "variable names to generate values for")
   .option("-t, --target <path>", "target .env file", ".env")
+  .option("-l, --length <bytes>", "length in bytes for generated values", "32")
   .option("--dry-run", "show what would be generated without making changes")
   .option("-f, --force", "overwrite existing values")
   .action(
     (
       variables: string[],
-      options: { target: string; dryRun?: boolean; force?: boolean }
+      options: {
+        target: string
+        length: string
+        dryRun?: boolean
+        force?: boolean
+      }
     ) => {
       try {
         const result = generateVariables({
           envPath: options.target,
           variables,
+          length: parseInt(options.length, 10),
           dryRun: options.dryRun,
           force: options.force
         })
@@ -96,8 +110,12 @@ program
         if (options.dryRun) {
           if (result.bootstrapped) {
             console.log(
-              `[DRY RUN] Would create ${options.target} with generated values for: ${variables.join(", ")}`
+              `[DRY RUN] Would create ${options.target} with generated values:`
             )
+            result.missingKeys.forEach((key) => {
+              const value = result.missingKeyValues?.[key] || ""
+              console.log(`  ${key}="${value}"`)
+            })
           } else if (result.missingKeys.length === 0) {
             console.log(
               `[DRY RUN] All variables already exist in ${options.target} – nothing to do.`
@@ -111,16 +129,20 @@ program
             const existing = variables.filter(
               (v) => !result.missingKeys.includes(v)
             )
-            console.log(
-              `[DRY RUN] Would generate values for: ${result.missingKeys.join(", ")}`
-            )
+            console.log(`[DRY RUN] Would generate values for:`)
+            result.missingKeys.forEach((key) => {
+              const value = result.missingKeyValues?.[key] || ""
+              console.log(`  ${key}="${value}"`)
+            })
             console.log(
               `[DRY RUN] Already exist (skipping): ${existing.join(", ")}`
             )
           } else {
-            console.log(
-              `[DRY RUN] Would generate values for: ${result.missingKeys.join(", ")}`
-            )
+            console.log(`[DRY RUN] Would generate values for:`)
+            result.missingKeys.forEach((key) => {
+              const value = result.missingKeyValues?.[key] || ""
+              console.log(`  ${key}="${value}"`)
+            })
           }
         } else {
           if (result.bootstrapped) {

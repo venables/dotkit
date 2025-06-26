@@ -10,6 +10,7 @@ export interface SyncOptions {
 export interface GenerateOptions {
   envPath: string
   variables: string[]
+  length?: number
   dryRun?: boolean
   force?: boolean
 }
@@ -20,8 +21,8 @@ export interface SetupResult {
   missingKeys: string[]
 }
 
-export function generateRandomHex(): string {
-  return randomBytes(32).toString("hex")
+export function generateRandomHex(length: number = 32): string {
+  return randomBytes(length).toString("hex")
 }
 
 export function getValueForKey(

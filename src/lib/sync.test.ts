@@ -31,7 +31,8 @@ describe("syncDotenv", () => {
     expect(result.missingCount).toBe(2)
     expect(result.missingKeys).toEqual(["API_KEY", "DB_URL"])
     expect(existsSync(testEnvPath)).toBe(true)
-    expect(readFileSync(testEnvPath, "utf8")).toBe(exampleContent)
+    const envContent = readFileSync(testEnvPath, "utf8")
+    expect(envContent).toBe("API_KEY=example_key\nDB_URL=postgres://localhost")
   })
 
   it("returns no changes when all variables are present", () => {
@@ -71,8 +72,8 @@ describe("syncDotenv", () => {
 
     const envContent = readFileSync(testEnvPath, "utf8")
     expect(envContent).toContain("API_KEY=my_key")
-    expect(envContent).toContain("DB_URL=postgres://localhost")
-    expect(envContent).toContain("DEBUG=true")
+    expect(envContent).toContain('DB_URL="postgres://localhost"')
+    expect(envContent).toContain('DEBUG="true"')
   })
 
   it("handles empty .env file", () => {
@@ -92,8 +93,8 @@ describe("syncDotenv", () => {
     expect(result.missingKeys).toEqual(["API_KEY", "DB_URL"])
 
     const envContent = readFileSync(testEnvPath, "utf8")
-    expect(envContent).toContain("API_KEY=example_key")
-    expect(envContent).toContain("DB_URL=postgres://localhost")
+    expect(envContent).toContain('API_KEY="example_key"')
+    expect(envContent).toContain('DB_URL="postgres://localhost"')
   })
 
   it("handles .env with comments and empty lines", () => {
@@ -135,8 +136,8 @@ describe("syncDotenv", () => {
 
     const envContent = readFileSync(testEnvPath, "utf8")
     expect(envContent).toContain("API_KEY=my_key")
-    expect(envContent).toContain("DB_URL=postgres://localhost")
-    expect(envContent).toContain("PORT=3000")
+    expect(envContent).toContain('DB_URL="postgres://localhost"')
+    expect(envContent).toContain('PORT="3000"')
     expect(envContent).not.toContain("DEBUG=true")
   })
 
@@ -157,8 +158,8 @@ describe("syncDotenv", () => {
     expect(result.missingKeys).toEqual(["API_KEY", "DB_URL"])
 
     const envContent = readFileSync(testEnvPath, "utf8")
-    expect(envContent).toContain("API_KEY=example_key")
-    expect(envContent).toContain("DB_URL=postgres://localhost")
+    expect(envContent).toContain('API_KEY="example_key"')
+    expect(envContent).toContain('DB_URL="postgres://localhost"')
     expect(envContent).not.toContain("DEBUG=true")
     expect(envContent).not.toContain("PORT=3000")
   })
@@ -181,7 +182,7 @@ describe("syncDotenv", () => {
     expect(result.missingKeys).toEqual(["DB_URL"])
 
     const envContent = readFileSync(testEnvPath, "utf8")
-    expect(envContent).toContain("DB_URL=postgres://localhost")
+    expect(envContent).toContain('DB_URL="postgres://localhost"')
     expect(envContent).not.toContain("NON_EXISTENT")
     expect(envContent).not.toContain("ALSO_MISSING")
   })
