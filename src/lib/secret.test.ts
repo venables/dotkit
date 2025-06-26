@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest"
-import { readFileSync, writeFileSync, unlinkSync, existsSync } from "node:fs"
-import { generateVariables } from "./secret.js"
+import { afterEach, beforeEach, describe, expect, it } from "bun:test"
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs"
+import { generateVariables } from "./secret"
 
 describe("generateVariables", () => {
   const testEnvPath = ".env.generate.test"
@@ -18,7 +18,7 @@ describe("generateVariables", () => {
   it("creates new file with generated variables", () => {
     const result = generateVariables({
       envPath: testEnvPath,
-      variables: ["AUTH_SECRET", "JWT_SECRET"]
+      variables: ["AUTH_SECRET", "JWT_SECRET"],
     })
 
     expect(result.bootstrapped).toBe(true)
@@ -31,7 +31,7 @@ describe("generateVariables", () => {
     const jwtSecretMatch = envContent.match(/JWT_SECRET="([a-f0-9]{64})"/)
     expect(authSecretMatch).toBeTruthy()
     expect(jwtSecretMatch).toBeTruthy()
-    expect(authSecretMatch![1]).not.toBe(jwtSecretMatch![1]) // Different values
+    expect(authSecretMatch?.[1]).not.toBe(jwtSecretMatch?.[1]) // Different values
   })
 
   it("appends to existing file", () => {
@@ -39,7 +39,7 @@ describe("generateVariables", () => {
 
     const result = generateVariables({
       envPath: testEnvPath,
-      variables: ["AUTH_SECRET"]
+      variables: ["AUTH_SECRET"],
     })
 
     expect(result.bootstrapped).toBe(false)
@@ -57,7 +57,7 @@ describe("generateVariables", () => {
     const result = generateVariables({
       envPath: testEnvPath,
       variables: ["AUTH_SECRET", "JWT_SECRET"],
-      dryRun: true
+      dryRun: true,
     })
 
     expect(result.bootstrapped).toBe(true)
@@ -74,7 +74,7 @@ describe("generateVariables", () => {
     const result = generateVariables({
       envPath: testEnvPath,
       variables: ["AUTH_SECRET"],
-      dryRun: true
+      dryRun: true,
     })
 
     expect(result.bootstrapped).toBe(false)
@@ -90,7 +90,7 @@ describe("generateVariables", () => {
   it("generates multiple variables with different values", () => {
     const result = generateVariables({
       envPath: testEnvPath,
-      variables: ["SECRET_1", "SECRET_2", "SECRET_3"]
+      variables: ["SECRET_1", "SECRET_2", "SECRET_3"],
     })
 
     expect(result.bootstrapped).toBe(true)
@@ -107,20 +107,17 @@ describe("generateVariables", () => {
     expect(secret3Match).toBeTruthy()
 
     // All values should be different
-    expect(secret1Match![1]).not.toBe(secret2Match![1])
-    expect(secret1Match![1]).not.toBe(secret3Match![1])
-    expect(secret2Match![1]).not.toBe(secret3Match![1])
+    expect(secret1Match?.[1]).not.toBe(secret2Match?.[1])
+    expect(secret1Match?.[1]).not.toBe(secret3Match?.[1])
+    expect(secret2Match?.[1]).not.toBe(secret3Match?.[1])
   })
 
   it("does not overwrite existing variables by default", () => {
-    writeFileSync(
-      testEnvPath,
-      "AUTH_SECRET=existing_secret\nAPI_KEY=existing_key"
-    )
+    writeFileSync(testEnvPath, "AUTH_SECRET=existing_secret\nAPI_KEY=existing_key")
 
     const result = generateVariables({
       envPath: testEnvPath,
-      variables: ["AUTH_SECRET", "NEW_SECRET"]
+      variables: ["AUTH_SECRET", "NEW_SECRET"],
     })
 
     expect(result.bootstrapped).toBe(false)
@@ -135,15 +132,12 @@ describe("generateVariables", () => {
   })
 
   it("overwrites existing variables with --force flag", () => {
-    writeFileSync(
-      testEnvPath,
-      "AUTH_SECRET=existing_secret\nAPI_KEY=existing_key"
-    )
+    writeFileSync(testEnvPath, "AUTH_SECRET=existing_secret\nAPI_KEY=existing_key")
 
     const result = generateVariables({
       envPath: testEnvPath,
       variables: ["AUTH_SECRET", "NEW_SECRET"],
-      force: true
+      force: true,
     })
 
     expect(result.bootstrapped).toBe(false)
@@ -163,7 +157,7 @@ describe("generateVariables", () => {
     const result = generateVariables({
       envPath: testEnvPath,
       variables: ["AUTH_SECRET", "NEW_SECRET"],
-      dryRun: true
+      dryRun: true,
     })
 
     expect(result.bootstrapped).toBe(false)
@@ -182,7 +176,7 @@ describe("generateVariables", () => {
       envPath: testEnvPath,
       variables: ["AUTH_SECRET", "NEW_SECRET"],
       dryRun: true,
-      force: true
+      force: true,
     })
 
     expect(result.bootstrapped).toBe(false)
@@ -199,7 +193,7 @@ describe("generateVariables", () => {
 
     const result = generateVariables({
       envPath: testEnvPath,
-      variables: ["AUTH_SECRET"] // This already exists
+      variables: ["AUTH_SECRET"], // This already exists
     })
 
     expect(result.bootstrapped).toBe(false)
@@ -215,7 +209,7 @@ describe("generateVariables", () => {
     const result = generateVariables({
       envPath: testEnvPath,
       variables: ["SHORT_SECRET", "LONG_SECRET"],
-      length: 16 // 16 bytes = 32 hex characters
+      length: 16, // 16 bytes = 32 hex characters
     })
 
     expect(result.bootstrapped).toBe(true)
@@ -227,13 +221,13 @@ describe("generateVariables", () => {
     const longSecretMatch = envContent.match(/LONG_SECRET="([a-f0-9]{32})"/)
     expect(shortSecretMatch).toBeTruthy()
     expect(longSecretMatch).toBeTruthy()
-    expect(shortSecretMatch![1]).not.toBe(longSecretMatch![1]) // Different values
+    expect(shortSecretMatch?.[1]).not.toBe(longSecretMatch?.[1]) // Different values
   })
 
   it("generates values with default length when not specified", () => {
     const result = generateVariables({
       envPath: testEnvPath,
-      variables: ["DEFAULT_SECRET"]
+      variables: ["DEFAULT_SECRET"],
     })
 
     expect(result.bootstrapped).toBe(true)
@@ -242,9 +236,7 @@ describe("generateVariables", () => {
 
     const envContent = readFileSync(testEnvPath, "utf8")
     // Default is 32 bytes = 64 hex characters
-    const defaultSecretMatch = envContent.match(
-      /DEFAULT_SECRET="([a-f0-9]{64})"/
-    )
+    const defaultSecretMatch = envContent.match(/DEFAULT_SECRET="([a-f0-9]{64})"/)
     expect(defaultSecretMatch).toBeTruthy()
   })
 })

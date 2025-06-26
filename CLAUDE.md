@@ -8,27 +8,27 @@ Core development workflow:
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Run tests (uses vitest)
-pnpm test
+bun test
 
 # Run single test file
-pnpm test src/lib/sync.test.ts
+bun test src/lib/sync.test.ts
 
 # Build the CLI tool
-pnpm build
+bun build
 
 # Run all checks (format, lint, typecheck)
-pnpm check
+bun check
 
 # Auto-fix formatting and linting issues
-pnpm fix
+bun fix
 
 # Individual checks
-pnpm run check-format  # Check Prettier formatting
-pnpm run lint          # Run oxlint + publint
-pnpm run typecheck     # TypeScript type checking
+bun run check-format  # Check Prettier formatting
+bun run lint          # Run oxlint + publint
+bun run typecheck     # TypeScript type checking
 ```
 
 ## Usage Examples

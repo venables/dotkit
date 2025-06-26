@@ -1,7 +1,7 @@
 {
   "name": "dotkit",
   "version": "1.2.0",
-  "description": "A powerful CLI toolkit for managing environment variables and dotenv files.",
+  "description": "A powerful CLI toolkit for managing environment variables and .env files.",
   "keywords": [
     "dotenv",
     "environment",
@@ -27,30 +27,28 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "check": "pnpm run check-format && pnpm run lint && pnpm run typecheck",
-    "check-format": "prettier --check .",
-    "dev": "tsx ./src/index.ts",
-    "fix": "prettier --write . && oxlint --fix .",
-    "format": "prettier --write .",
-    "lint": "oxlint . && publint",
-    "prepublishOnly": "pnpm run build",
-    "test": "vitest",
-    "typecheck": "tsc --noEmit"
+    "check": "biome check . && bun run typecheck && bun test --coverage && bun run publint",
+    "clean": "git clean -xdf dist",
+    "dev": "bun run ./src/index.ts",
+    "fix": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "nuke": "bun clean && rm -rf node_modules",
+    "outdated": "npx npm-check-updates --interactive --format group",
+    "prepublishOnly": "bun run build",
+    "typecheck": "tsc --noEmit --pretty"
   },
   "dependencies": {
     "commander": "^14.0.0",
     "dotenv": "^16.5.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.1",
-    "oxlint": "^1.1.0",
-    "prettier": "^3.5.3",
-    "prettier-plugin-packagejson": "^2.5.15",
+    "@biomejs/biome": "2.0.5",
+    "@types/bun": "^1.2.17",
+    "@types/node": "^24.0.4",
     "publint": "^0.3.12",
-    "tsdown": "^0.12.7",
-    "tsx": "^4.20.3",
-    "typescript": "^5",
-    "vitest": "^3.2.3"
-  },
-  "packageManager": "pnpm@10.12.1"
+    "tsdown": "^0.12.9",
+    "typescript": "^5"
+  }
 }

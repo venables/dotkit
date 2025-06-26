@@ -1,18 +1,12 @@
-import { writeFileSync, existsSync, readFileSync } from "node:fs"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { parse } from "dotenv"
-import {
-  generateRandomHex,
-  type GenerateOptions,
-  type SetupResult
-} from "./common.js"
+import { type GenerateOptions, generateRandomHex, type SetupResult } from "./common"
 
 interface DetailedGenerateResult extends SetupResult {
   missingKeyValues?: Record<string, string>
 }
 
-export function generateVariables(
-  options: GenerateOptions
-): DetailedGenerateResult {
+export function generateVariables(options: GenerateOptions): DetailedGenerateResult {
   const { envPath, variables, length = 32, dryRun, force } = options
 
   const bootstrapped = !existsSync(envPath)
@@ -32,13 +26,11 @@ export function generateVariables(
   }
 
   if (!dryRun && variablesToGenerate.length > 0) {
-    const lines = variablesToGenerate.map(
-      (key) => `${key}="${generateRandomHex(length)}"`
-    )
+    const lines = variablesToGenerate.map((key) => `${key}="${generateRandomHex(length)}"`)
 
     if (bootstrapped) {
       // Create new file
-      writeFileSync(envPath, lines.join("\n") + "\n")
+      writeFileSync(envPath, `${lines.join("\n")}\n`)
     } else if (force && variables.some((key) => existingKeys.includes(key))) {
       // Force mode: remove existing keys and rewrite file
       const existingContent = readFileSync(envPath, "utf8")
@@ -58,17 +50,13 @@ export function generateVariables(
       updatedContent = updatedContent.replace(/\n\n+/g, "\n").trim()
 
       // Add new generated values
-      const newContent =
-        updatedContent +
-        (updatedContent ? "\n\n" : "") +
-        lines.join("\n") +
-        "\n"
+      const newContent = `${updatedContent + (updatedContent ? "\n\n" : "") + lines.join("\n")}\n`
 
       writeFileSync(envPath, newContent)
     } else {
       // Append to existing file (normal mode)
       writeFileSync(envPath, `\n${lines.join("\n")}\n`, {
-        flag: "a"
+        flag: "a",
       })
     }
   }
@@ -79,13 +67,13 @@ export function generateVariables(
       acc[key] = generateRandomHex(length)
       return acc
     },
-    {} as Record<string, string>
+    {} as Record<string, string>,
   )
 
   return {
     bootstrapped,
     missingCount: variablesToGenerate.length,
     missingKeys: variablesToGenerate,
-    missingKeyValues
+    missingKeyValues,
   }
 }

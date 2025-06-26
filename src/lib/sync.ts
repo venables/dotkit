@@ -1,21 +1,16 @@
-import { readFileSync, writeFileSync, existsSync } from "node:fs"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { parse } from "dotenv"
-import { getValueForKey, type SyncOptions, type SetupResult } from "./common.js"
+import { getValueForKey, type SetupResult, type SyncOptions } from "./common"
 
 interface DetailedSetupResult extends SetupResult {
   missingKeyValues?: Record<string, string>
 }
 
-function getKeysToProcess(
-  templateParsed: Record<string, string>,
-  variables?: string[]
-): string[] {
+function getKeysToProcess(templateParsed: Record<string, string>, variables?: string[]): string[] {
   const allTemplateKeys = Object.keys(templateParsed)
 
   // Include variables from template (filtered by --only if provided)
-  return variables && variables.length > 0
-    ? variables.filter((key) => allTemplateKeys.includes(key))
-    : allTemplateKeys
+  return variables && variables.length > 0 ? variables.filter((key) => allTemplateKeys.includes(key)) : allTemplateKeys
 }
 
 function bootstrapEnvFile(
@@ -24,15 +19,13 @@ function bootstrapEnvFile(
   templateParsed: Record<string, string>,
   keysToBootstrap: string[],
   variables?: string[],
-  dryRun?: boolean
+  dryRun?: boolean,
 ): void {
   if (dryRun) return
 
   if (variables && variables.length > 0) {
-    const filteredLines = keysToBootstrap.map(
-      (key) => `${key}="${getValueForKey(key, templateParsed)}"`
-    )
-    writeFileSync(envPath, filteredLines.join("\n") + "\n")
+    const filteredLines = keysToBootstrap.map((key) => `${key}="${getValueForKey(key, templateParsed)}"`)
+    writeFileSync(envPath, `${filteredLines.join("\n")}\n`)
     return
   }
 
@@ -44,13 +37,13 @@ function appendMissingVariables(
   envPath: string,
   missingKeys: string[],
   defaults: Record<string, string>,
-  dryRun?: boolean
+  dryRun?: boolean,
 ): void {
   if (dryRun || missingKeys.length === 0) return
 
   const lines = missingKeys.map((k) => `${k}="${getValueForKey(k, defaults)}"`)
   writeFileSync(envPath, `\n${lines.join("\n")}\n`, {
-    flag: "a"
+    flag: "a",
   })
 }
 
@@ -64,28 +57,21 @@ export function syncDotenv(options: SyncOptions): DetailedSetupResult {
   if (!existsSync(envPath)) {
     const keysToBootstrap = getKeysToProcess(templateParsed, variables)
 
-    bootstrapEnvFile(
-      envPath,
-      templateContent,
-      templateParsed,
-      keysToBootstrap,
-      variables,
-      dryRun
-    )
+    bootstrapEnvFile(envPath, templateContent, templateParsed, keysToBootstrap, variables, dryRun)
 
     const missingKeyValues = keysToBootstrap.reduce(
       (acc, key) => {
         acc[key] = getValueForKey(key, templateParsed)
         return acc
       },
-      {} as Record<string, string>
+      {} as Record<string, string>,
     )
 
     return {
       bootstrapped: true,
       missingCount: keysToBootstrap.length,
       missingKeys: keysToBootstrap,
-      missingKeyValues
+      missingKeyValues,
     }
   }
 
@@ -101,13 +87,13 @@ export function syncDotenv(options: SyncOptions): DetailedSetupResult {
       acc[key] = getValueForKey(key, templateParsed)
       return acc
     },
-    {} as Record<string, string>
+    {} as Record<string, string>,
   )
 
   return {
     bootstrapped: false,
     missingCount: missingKeys.length,
     missingKeys,
-    missingKeyValues
+    missingKeyValues,
   }
 }

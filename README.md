@@ -209,19 +209,19 @@ Generated values are hexadecimal strings created using Node.js `crypto.randomByt
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Run tests
-pnpm test
+bun test
 
 # Build
-pnpm build
+bun build
 
 # Run all checks (format, lint, typecheck)
-pnpm check
+bun check
 
 # Auto-fix issues
-pnpm fix
+bun fix
 ```
 
 ## License

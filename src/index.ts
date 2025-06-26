@@ -1,82 +1,63 @@
 #!/usr/bin/env node
+import process from "node:process"
 import { program } from "commander"
-import { generateVariables } from "./lib/secret.js"
-import { syncDotenv } from "./lib/sync.js"
+import { version } from "../package.json" with { type: "json" }
+import { generateVariables } from "./lib/secret"
+import { syncDotenv } from "./lib/sync"
 
 program
   .name("dotkit")
-  .description(
-    "A powerful CLI toolkit for managing environment variables and dotenv files"
-  )
-  .version("1.0.0")
+  .description("A powerful CLI toolkit for managing environment variables and dotenv files")
+  .version(version)
 
 // Sync command
 program
   .command("sync")
   .description("Sync environment variables from template to .env file")
   .option("-t, --target <path>", "target .env file (destination)", ".env")
-  .option(
-    "-s, --source <path>",
-    "source file to sync from (e.g., .env.example)",
-    ".env.example"
-  )
+  .option("-s, --source <path>", "source file to sync from (e.g., .env.example)", ".env.example")
   .option("--only <variables...>", "only copy these specific variables")
   .option("--dry-run", "show what would be copied without making changes")
-  .action(
-    (options: {
-      target: string
-      source: string
-      only?: string[]
-      dryRun?: boolean
-    }) => {
-      try {
-        const result = syncDotenv({
-          envPath: options.target,
-          templatePath: options.source,
-          variables: options.only,
-          dryRun: options.dryRun
-        })
+  .action((options: { target: string; source: string; only?: string[]; dryRun?: boolean }) => {
+    try {
+      const result = syncDotenv({
+        envPath: options.target,
+        templatePath: options.source,
+        variables: options.only,
+        dryRun: options.dryRun,
+      })
 
-        if (options.dryRun) {
-          if (result.bootstrapped) {
-            console.log(
-              `[DRY RUN] Would create ${options.target} from ${options.source}`
-            )
-            if (result.missingKeys.length > 0) {
-              console.log(`[DRY RUN] Would copy these variables:`)
-              result.missingKeys.forEach((key) => {
-                const value = result.missingKeyValues?.[key] || ""
-                console.log(`  ${key}="${value}"`)
-              })
-            }
-          } else if (result.missingCount === 0) {
-            console.log(
-              "[DRY RUN] All variables already present – nothing to do."
-            )
-          } else {
-            console.log(
-              `[DRY RUN] Would append ${result.missingCount} variable(s) to ${options.target}:`
-            )
+      if (options.dryRun) {
+        if (result.bootstrapped) {
+          console.log(`[DRY RUN] Would create ${options.target} from ${options.source}`)
+          if (result.missingKeys.length > 0) {
+            console.log(`[DRY RUN] Would copy these variables:`)
             result.missingKeys.forEach((key) => {
               const value = result.missingKeyValues?.[key] || ""
               console.log(`  ${key}="${value}"`)
             })
           }
-        } else if (result.bootstrapped) {
-          console.log(`Created ${options.target} from ${options.source}`)
         } else if (result.missingCount === 0) {
-          console.log("All variables already present – nothing to do.")
+          console.log("[DRY RUN] All variables already present – nothing to do.")
         } else {
-          console.log(
-            `Appended ${result.missingCount} variable(s) to ${options.target}`
-          )
+          console.log(`[DRY RUN] Would append ${result.missingCount} variable(s) to ${options.target}:`)
+          result.missingKeys.forEach((key) => {
+            const value = result.missingKeyValues?.[key] || ""
+            console.log(`  ${key}="${value}"`)
+          })
         }
-      } catch (error) {
-        console.error("Error:", error instanceof Error ? error.message : error)
-        process.exit(1)
+      } else if (result.bootstrapped) {
+        console.log(`Created ${options.target} from ${options.source}`)
+      } else if (result.missingCount === 0) {
+        console.log("All variables already present – nothing to do.")
+      } else {
+        console.log(`Appended ${result.missingCount} variable(s) to ${options.target}`)
       }
+    } catch (error) {
+      console.error("Error:", error instanceof Error ? error.message : error)
+      process.exit(1)
     }
-  )
+  })
 
 // Secret command
 program
@@ -96,7 +77,7 @@ program
         length: string
         dryRun?: boolean
         force?: boolean
-      }
+      },
     ) => {
       try {
         const result = generateVariables({
@@ -104,39 +85,29 @@ program
           variables,
           length: parseInt(options.length, 10),
           dryRun: options.dryRun,
-          force: options.force
+          force: options.force,
         })
 
         if (options.dryRun) {
           if (result.bootstrapped) {
-            console.log(
-              `[DRY RUN] Would create ${options.target} with generated values:`
-            )
+            console.log(`[DRY RUN] Would create ${options.target} with generated values:`)
             result.missingKeys.forEach((key) => {
               const value = result.missingKeyValues?.[key] || ""
               console.log(`  ${key}="${value}"`)
             })
           } else if (result.missingKeys.length === 0) {
-            console.log(
-              `[DRY RUN] All variables already exist in ${options.target} – nothing to do.`
-            )
+            console.log(`[DRY RUN] All variables already exist in ${options.target} – nothing to do.`)
             if (!options.force) {
-              console.log(
-                `[DRY RUN] Use -f or --force to overwrite existing values.`
-              )
+              console.log(`[DRY RUN] Use -f or --force to overwrite existing values.`)
             }
           } else if (result.missingKeys.length < variables.length) {
-            const existing = variables.filter(
-              (v) => !result.missingKeys.includes(v)
-            )
+            const existing = variables.filter((v) => !result.missingKeys.includes(v))
             console.log(`[DRY RUN] Would generate values for:`)
             result.missingKeys.forEach((key) => {
               const value = result.missingKeyValues?.[key] || ""
               console.log(`  ${key}="${value}"`)
             })
-            console.log(
-              `[DRY RUN] Already exist (skipping): ${existing.join(", ")}`
-            )
+            console.log(`[DRY RUN] Already exist (skipping): ${existing.join(", ")}`)
           } else {
             console.log(`[DRY RUN] Would generate values for:`)
             result.missingKeys.forEach((key) => {
@@ -146,37 +117,27 @@ program
           }
         } else {
           if (result.bootstrapped) {
-            console.log(
-              `Created ${options.target} with generated values for: ${variables.join(", ")}`
-            )
+            console.log(`Created ${options.target} with generated values for: ${variables.join(", ")}`)
           } else if (result.missingKeys.length === 0) {
-            console.log(
-              `All variables already exist in ${options.target} – nothing to do.`
-            )
+            console.log(`All variables already exist in ${options.target} – nothing to do.`)
             if (!options.force) {
               console.log(`Use -f or --force to overwrite existing values.`)
             }
           } else if (result.missingKeys.length < variables.length) {
-            const existing = variables.filter(
-              (v) => !result.missingKeys.includes(v)
-            )
-            console.log(
-              `Generated values for: ${result.missingKeys.join(", ")}`
-            )
+            const existing = variables.filter((v) => !result.missingKeys.includes(v))
+            console.log(`Generated values for: ${result.missingKeys.join(", ")}`)
             if (!options.force) {
               console.log(`Already exist (skipped): ${existing.join(", ")}`)
             }
           } else {
-            console.log(
-              `Generated values for: ${result.missingKeys.join(", ")}`
-            )
+            console.log(`Generated values for: ${result.missingKeys.join(", ")}`)
           }
         }
       } catch (error) {
         console.error("Error:", error instanceof Error ? error.message : error)
         process.exit(1)
       }
-    }
+    },
   )
 
 program.parse()

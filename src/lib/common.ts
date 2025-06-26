@@ -25,9 +25,6 @@ export function generateRandomHex(length: number = 32): string {
   return randomBytes(length).toString("hex")
 }
 
-export function getValueForKey(
-  key: string,
-  templateParsed: Record<string, string>
-): string {
+export function getValueForKey(key: string, templateParsed: Record<string, string>): string {
   return templateParsed[key] || ""
 }
