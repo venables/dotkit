@@ -18,46 +18,59 @@ program
   .option("-s, --source <path>", "source file to sync from (e.g., .env.example)", ".env.example")
   .option("--only <variables...>", "only copy these specific variables")
   .option("--dry-run", "show what would be copied without making changes")
-  .action((options: { target: string; source: string; only?: string[]; dryRun?: boolean }) => {
-    try {
-      const result = syncDotenv({
-        envPath: options.target,
-        templatePath: options.source,
-        variables: options.only,
-        dryRun: options.dryRun,
-      })
+  .option("--no-overwrite-empty-values", "don't overwrite empty values in target file (default: overwrite)")
+  .option("--skip-empty-source-values", "skip variables with empty values in source file (default: include)")
+  .action(
+    (options: {
+      target: string
+      source: string
+      only?: string[]
+      dryRun?: boolean
+      overwriteEmptyValues?: boolean
+      skipEmptySourceValues?: boolean
+    }) => {
+      try {
+        const result = syncDotenv({
+          envPath: options.target,
+          templatePath: options.source,
+          variables: options.only,
+          dryRun: options.dryRun,
+          overwriteEmptyValues: options.overwriteEmptyValues,
+          skipEmptySourceValues: options.skipEmptySourceValues,
+        })
 
-      if (options.dryRun) {
-        if (result.bootstrapped) {
-          console.log(`[DRY RUN] Would create ${options.target} from ${options.source}`)
-          if (result.missingKeys.length > 0) {
-            console.log(`[DRY RUN] Would copy these variables:`)
+        if (options.dryRun) {
+          if (result.bootstrapped) {
+            console.log(`[DRY RUN] Would create ${options.target} from ${options.source}`)
+            if (result.missingKeys.length > 0) {
+              console.log(`[DRY RUN] Would copy these variables:`)
+              result.missingKeys.forEach((key) => {
+                const value = result.missingKeyValues?.[key] || ""
+                console.log(`  ${key}="${value}"`)
+              })
+            }
+          } else if (result.missingCount === 0) {
+            console.log("[DRY RUN] All variables already present – nothing to do.")
+          } else {
+            console.log(`[DRY RUN] Would append ${result.missingCount} variable(s) to ${options.target}:`)
             result.missingKeys.forEach((key) => {
               const value = result.missingKeyValues?.[key] || ""
               console.log(`  ${key}="${value}"`)
             })
           }
+        } else if (result.bootstrapped) {
+          console.log(`Created ${options.target} from ${options.source}`)
         } else if (result.missingCount === 0) {
-          console.log("[DRY RUN] All variables already present – nothing to do.")
+          console.log("All variables already present – nothing to do.")
         } else {
-          console.log(`[DRY RUN] Would append ${result.missingCount} variable(s) to ${options.target}:`)
-          result.missingKeys.forEach((key) => {
-            const value = result.missingKeyValues?.[key] || ""
-            console.log(`  ${key}="${value}"`)
-          })
+          console.log(`Appended ${result.missingCount} variable(s) to ${options.target}`)
         }
-      } else if (result.bootstrapped) {
-        console.log(`Created ${options.target} from ${options.source}`)
-      } else if (result.missingCount === 0) {
-        console.log("All variables already present – nothing to do.")
-      } else {
-        console.log(`Appended ${result.missingCount} variable(s) to ${options.target}`)
+      } catch (error) {
+        console.error("Error:", error instanceof Error ? error.message : error)
+        process.exit(1)
       }
-    } catch (error) {
-      console.error("Error:", error instanceof Error ? error.message : error)
-      process.exit(1)
-    }
-  })
+    },
+  )
 
 // Secret command
 program

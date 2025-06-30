@@ -220,4 +220,103 @@ describe("syncDotenv", () => {
     const envContent = readFileSync(testEnvPath, "utf8")
     expect(envContent).toBe("API_KEY=my_key")
   })
+
+  it("overwrites empty values by default when source has non-empty value", () => {
+    writeFileSync(testEnvPath, 'API_KEY=my_key\nDB_URL=""\nDEBUG=false')
+    writeFileSync(testExamplePath, "API_KEY=example_key\nDB_URL=postgres://localhost\nDEBUG=\nNEW_VAR=value")
+
+    const result = syncDotenv({
+      envPath: testEnvPath,
+      templatePath: testExamplePath,
+    })
+
+    expect(result.bootstrapped).toBe(false)
+    expect(result.missingKeys).toContain("DB_URL") // Should overwrite empty string
+    expect(result.missingKeys).toContain("NEW_VAR") // Should add new variable
+    expect(result.missingKeys).not.toContain("DEBUG") // Empty source, non-empty target - no overwrite
+
+    const envContent = readFileSync(testEnvPath, "utf8")
+    expect(envContent).toContain('DB_URL="postgres://localhost"')
+    expect(envContent).toContain('NEW_VAR="value"')
+  })
+
+  it("does not overwrite empty values when --no-overwrite-empty-values is used", () => {
+    writeFileSync(testEnvPath, 'API_KEY=my_key\nDB_URL=""')
+    writeFileSync(testExamplePath, "API_KEY=example_key\nDB_URL=postgres://localhost\nNEW_VAR=value")
+
+    const result = syncDotenv({
+      envPath: testEnvPath,
+      templatePath: testExamplePath,
+      overwriteEmptyValues: false,
+    })
+
+    expect(result.bootstrapped).toBe(false)
+    expect(result.missingKeys).toEqual(["NEW_VAR"]) // Only missing variables, no empty value overwrite
+    expect(result.missingKeys).not.toContain("DB_URL")
+
+    const envContent = readFileSync(testEnvPath, "utf8")
+    expect(envContent).toContain('DB_URL=""') // Should remain empty
+    expect(envContent).toContain('NEW_VAR="value"')
+  })
+
+  it("skips empty source values when --skip-empty-source-values is used", () => {
+    writeFileSync(testExamplePath, 'API_KEY=example_key\nDB_URL=""\nDEBUG=\nVALID_VAR=value')
+
+    const result = syncDotenv({
+      envPath: testEnvPath,
+      templatePath: testExamplePath,
+      skipEmptySourceValues: true,
+    })
+
+    expect(result.bootstrapped).toBe(true)
+    expect(result.missingKeys).toEqual(["API_KEY", "VALID_VAR"]) // Only non-empty variables
+    expect(result.missingKeys).not.toContain("DB_URL")
+    expect(result.missingKeys).not.toContain("DEBUG")
+
+    const envContent = readFileSync(testEnvPath, "utf8")
+    expect(envContent).toContain('API_KEY="example_key"')
+    expect(envContent).toContain('VALID_VAR="value"')
+    expect(envContent).not.toContain("DB_URL")
+    expect(envContent).not.toContain("DEBUG")
+  })
+
+  it("combines both flags correctly", () => {
+    writeFileSync(testEnvPath, 'API_KEY=""\nEXISTING=value')
+    writeFileSync(testExamplePath, 'API_KEY=filled_key\nDB_URL=""\nNEW_VAR=new_value')
+
+    const result = syncDotenv({
+      envPath: testEnvPath,
+      templatePath: testExamplePath,
+      overwriteEmptyValues: false,
+      skipEmptySourceValues: true,
+    })
+
+    expect(result.bootstrapped).toBe(false)
+    expect(result.missingKeys).toEqual(["NEW_VAR"]) // Only non-empty missing variables
+    expect(result.missingKeys).not.toContain("API_KEY") // Empty target but overwrite disabled
+    expect(result.missingKeys).not.toContain("DB_URL") // Empty source value skipped
+
+    const envContent = readFileSync(testEnvPath, "utf8")
+    expect(envContent).toContain('API_KEY=""') // Should remain empty
+    expect(envContent).toContain('NEW_VAR="new_value"')
+    expect(envContent).not.toContain("DB_URL")
+  })
+
+  it("handles empty value overwrite in dry run mode", () => {
+    writeFileSync(testEnvPath, 'API_KEY=""\nEXISTING=value')
+    writeFileSync(testExamplePath, "API_KEY=filled_key\nNEW_VAR=new_value")
+
+    const result = syncDotenv({
+      envPath: testEnvPath,
+      templatePath: testExamplePath,
+      dryRun: true,
+    })
+
+    expect(result.bootstrapped).toBe(false)
+    expect(result.missingKeys).toEqual(["API_KEY", "NEW_VAR"]) // Should include empty value overwrite
+
+    // File should not be modified in dry run
+    const envContent = readFileSync(testEnvPath, "utf8")
+    expect(envContent).toBe('API_KEY=""\nEXISTING=value')
+  })
 })

@@ -43,8 +43,14 @@ dotkit sync --source .env.local.example --target .env.local
 # Sync only specific variables
 dotkit sync --only API_KEY DB_URL
 
-# Just sync variables from template
-dotkit sync
+# Don't overwrite existing empty values in target file
+dotkit sync --no-overwrite-empty-values
+
+# Skip variables with empty values in source file
+dotkit sync --skip-empty-source-values
+
+# Combine both flags
+dotkit sync --no-overwrite-empty-values --skip-empty-source-values
 
 # Generate random values for variables
 dotkit secret AUTH_SECRET JWT_SECRET SESSION_KEY
@@ -79,7 +85,10 @@ This is a TypeScript CLI toolkit that provides commands for managing environment
 
 - CLI interface using Commander.js with subcommands
 - **`sync` command**: Syncs environment variables from template to .env file
-  - Options: `--target`, `--source`, `--only`, `--dry-run`
+  - Options: `--target`, `--source`, `--only`, `--dry-run`, `--no-overwrite-empty-values`, `--skip-empty-source-values`
+  - By default, overwrites empty string values in target file when source has non-empty values
+  - Use `--no-overwrite-empty-values` to preserve existing empty values in target file
+  - Use `--skip-empty-source-values` to exclude variables with empty values from source file
 - **`secret` command**: Generates random hex values for specific environment variables
   - Arguments: variable names to generate
   - Options: `--target`, `--length`, `--force`, `--dry-run`
@@ -100,10 +109,12 @@ This is a TypeScript CLI toolkit that provides commands for managing environment
 
 - `syncDotenv()` - Main sync function with two operation modes:
   1. **Bootstrap mode**: Creates new .env file when none exists
-  2. **Sync mode**: Appends missing variables to existing .env file
-- `getKeysToProcess()` - Filters variables based on --only option
+  2. **Sync mode**: Appends missing variables to existing .env file and optionally overwrites empty values
+- `getKeysToProcess()` - Filters variables based on --only option and --skip-empty-source-values flag
 - `bootstrapEnvFile()` - Creates new .env files
 - `appendMissingVariables()` - Adds missing vars to existing files
+- **Empty value handling**: By default overwrites empty string values ("") in target when source has non-empty values
+- **Source filtering**: Can skip variables with empty values in source file when --skip-empty-source-values is enabled
 
 **`src/lib/secret.ts`** - Secret command logic:
 

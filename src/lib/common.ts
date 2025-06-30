@@ -5,6 +5,8 @@ export interface SyncOptions {
   templatePath: string
   variables?: string[]
   dryRun?: boolean
+  overwriteEmptyValues?: boolean
+  skipEmptySourceValues?: boolean
 }
 
 export interface GenerateOptions {

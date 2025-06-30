@@ -6,11 +6,21 @@ interface DetailedSetupResult extends SetupResult {
   missingKeyValues?: Record<string, string>
 }
 
-function getKeysToProcess(templateParsed: Record<string, string>, variables?: string[]): string[] {
+function getKeysToProcess(
+  templateParsed: Record<string, string>,
+  variables?: string[],
+  skipEmptySourceValues?: boolean,
+): string[] {
   const allTemplateKeys = Object.keys(templateParsed)
+  let keysToInclude =
+    variables && variables.length > 0 ? variables.filter((key) => allTemplateKeys.includes(key)) : allTemplateKeys
 
-  // Include variables from template (filtered by --only if provided)
-  return variables && variables.length > 0 ? variables.filter((key) => allTemplateKeys.includes(key)) : allTemplateKeys
+  // Filter out keys with empty values if skipEmptySourceValues is enabled
+  if (skipEmptySourceValues) {
+    keysToInclude = keysToInclude.filter((key) => templateParsed[key] && templateParsed[key].trim() !== "")
+  }
+
+  return keysToInclude
 }
 
 function bootstrapEnvFile(
@@ -20,10 +30,11 @@ function bootstrapEnvFile(
   keysToBootstrap: string[],
   variables?: string[],
   dryRun?: boolean,
+  skipEmptySourceValues?: boolean,
 ): void {
   if (dryRun) return
 
-  if (variables && variables.length > 0) {
+  if ((variables && variables.length > 0) || skipEmptySourceValues) {
     const filteredLines = keysToBootstrap.map((key) => `${key}="${getValueForKey(key, templateParsed)}"`)
     writeFileSync(envPath, `${filteredLines.join("\n")}\n`)
     return
@@ -48,16 +59,31 @@ function appendMissingVariables(
 }
 
 export function syncDotenv(options: SyncOptions): DetailedSetupResult {
-  const { envPath, templatePath, variables, dryRun } = options
+  const {
+    envPath,
+    templatePath,
+    variables,
+    dryRun,
+    overwriteEmptyValues = true,
+    skipEmptySourceValues = false,
+  } = options
 
   const templateContent = readFileSync(templatePath, "utf8")
   const templateParsed = parse(templateContent)
 
   // Handle bootstrap case (no .env file exists)
   if (!existsSync(envPath)) {
-    const keysToBootstrap = getKeysToProcess(templateParsed, variables)
+    const keysToBootstrap = getKeysToProcess(templateParsed, variables, skipEmptySourceValues)
 
-    bootstrapEnvFile(envPath, templateContent, templateParsed, keysToBootstrap, variables, dryRun)
+    bootstrapEnvFile(
+      envPath,
+      templateContent,
+      templateParsed,
+      keysToBootstrap,
+      variables,
+      dryRun,
+      skipEmptySourceValues,
+    )
 
     const missingKeyValues = keysToBootstrap.reduce(
       (acc, key) => {
@@ -77,8 +103,21 @@ export function syncDotenv(options: SyncOptions): DetailedSetupResult {
 
   // Handle sync case (.env file exists)
   const current = parse(readFileSync(envPath, "utf8"))
-  const availableKeys = getKeysToProcess(templateParsed, variables)
-  const missingKeys = availableKeys.filter((key) => !(key in current))
+  const availableKeys = getKeysToProcess(templateParsed, variables, skipEmptySourceValues)
+
+  // Filter keys to sync based on missing keys and empty value overwrite logic
+  const missingKeys = availableKeys.filter((key) => {
+    if (!(key in current)) {
+      return true // Key doesn't exist, add it
+    }
+
+    // Key exists - check if we should overwrite empty values
+    if (overwriteEmptyValues && current[key] === "" && templateParsed[key] && templateParsed[key].trim() !== "") {
+      return true // Overwrite empty value with non-empty template value
+    }
+
+    return false
+  })
 
   appendMissingVariables(envPath, missingKeys, templateParsed, dryRun)
 
