@@ -5,7 +5,7 @@ A powerful CLI toolkit for managing environment variables and dotenv files.
 ## Features
 
 - **Sync** environment variables from template files (like `.env.example`) to your `.env` files
-- **Generate** random hex values for secrets and authentication tokens
+- **Secret** generation of random hex values for secrets and authentication tokens
 - **Smart filtering** with `--only` to sync specific variables
 - **Custom length** generation with `--length` parameter
 - **Force overwrite** existing values with `-f/--force` when generating
@@ -63,8 +63,6 @@ dotkit secret AUTH_SECRET --force
 # Use short flags
 dotkit secret AUTH_SECRET -t .env.local -l 16 -f
 
-# Deprecated aliases (use secret instead)
-dotkit generate AUTH_SECRET --length 16
 ```
 
 ## Options
@@ -195,7 +193,7 @@ When your `.env` file doesn't exist, `dotkit sync` creates it from your template
 
 When your `.env` file exists, `dotkit sync` appends missing variables from the template with quoted values. Existing variables are never modified.
 
-### Generate Mode
+### Secret Mode
 
 `dotkit secret` creates cryptographically secure random hex values. It works independently of templates and can create new files or append to existing ones.
 

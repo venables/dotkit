@@ -20,8 +20,8 @@ export function generateVariables(options: GenerateOptions): DetailedGenerateRes
     existingKeys = Object.keys(existingParsed)
 
     if (!force) {
-      // Filter out variables that already exist
-      variablesToGenerate = variables.filter((key) => !(key in existingParsed))
+      // Filter out variables that already exist and have non-empty values
+      variablesToGenerate = variables.filter((key) => !(key in existingParsed) || existingParsed[key] === "")
     }
   }
 
@@ -31,13 +31,16 @@ export function generateVariables(options: GenerateOptions): DetailedGenerateRes
     if (bootstrapped) {
       // Create new file
       writeFileSync(envPath, `${lines.join("\n")}\n`)
-    } else if (force && variables.some((key) => existingKeys.includes(key))) {
-      // Force mode: remove existing keys and rewrite file
+    } else if (
+      (force && variables.some((key) => existingKeys.includes(key))) ||
+      variablesToGenerate.some((key) => existingKeys.includes(key))
+    ) {
+      // Force mode or overwriting empty values: remove existing keys and rewrite file
       const existingContent = readFileSync(envPath, "utf8")
       const existingParsed = parse(existingContent)
 
-      // Remove variables that we're regenerating
-      const variablesToRemove = variables.filter((key) => key in existingParsed)
+      // Remove variables that we're regenerating (existing ones we want to overwrite)
+      const variablesToRemove = variablesToGenerate.filter((key) => key in existingParsed)
       let updatedContent = existingContent
 
       // Remove existing lines for variables we're regenerating

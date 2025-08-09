@@ -67,9 +67,6 @@ dotkit secret AUTH_SECRET --force
 # Use short flags
 dotkit secret AUTH_SECRET -t .env.local -l 16 -f
 
-# Deprecated aliases (use secret instead)
-dotkit generate AUTH_SECRET --length 16
-
 # Dry run to see what would happen
 dotkit sync --dry-run
 dotkit secret AUTH_SECRET --dry-run
@@ -92,7 +89,6 @@ This is a TypeScript CLI toolkit that provides commands for managing environment
 - **`secret` command**: Generates random hex values for specific environment variables
   - Arguments: variable names to generate
   - Options: `--target`, `--length`, `--force`, `--dry-run`
-- **`generate` command**: Deprecated alias for `secret`
 - Handles output formatting for different modes (normal vs dry-run)
 - Safe by default: won't overwrite existing values unless `--force` is used
 - Error handling and process exit codes
@@ -131,7 +127,7 @@ All modules use `dotenv` package for parsing environment files and Node.js `cryp
 - **Functional decomposition** - each helper does one thing
 - **Dry-run support** - all file operations respect the dryRun flag
 - **Variable filtering** - `--only` option works in both bootstrap and sync modes
-- **Clean separation** - `sync` only handles template copying, `generate` only handles random value creation
+- **Clean separation** - `sync` only handles template copying, `secret` only handles random value creation
 - **Independent commands** - each command has a single, clear responsibility
 
 ### Test Conventions

@@ -75,7 +75,6 @@ program
 // Secret command
 program
   .command("secret")
-  .alias("generate")
   .description("Generate random hex values for environment variables")
   .argument("<variables...>", "variable names to generate values for")
   .option("-t, --target <path>", "target .env file", ".env")

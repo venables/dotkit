@@ -131,6 +131,27 @@ describe("generateVariables", () => {
     expect(envContent).toMatch(/NEW_SECRET="[a-f0-9]{64}"/)
   })
 
+  it("overwrites empty values by default", () => {
+    writeFileSync(testEnvPath, 'AUTH_SECRET=""\nAPI_KEY=existing_key\nEMPTY_VAR=""')
+
+    const result = generateVariables({
+      envPath: testEnvPath,
+      variables: ["AUTH_SECRET", "NEW_SECRET", "EMPTY_VAR"],
+    })
+
+    expect(result.bootstrapped).toBe(false)
+    expect(result.missingCount).toBe(3) // AUTH_SECRET, NEW_SECRET, and EMPTY_VAR should be generated
+    expect(result.missingKeys).toEqual(["AUTH_SECRET", "NEW_SECRET", "EMPTY_VAR"])
+
+    const envContent = readFileSync(testEnvPath, "utf8")
+    expect(envContent).not.toContain('AUTH_SECRET=""') // Empty value should be replaced
+    expect(envContent).not.toContain('EMPTY_VAR=""') // Empty value should be replaced
+    expect(envContent).toContain("API_KEY=existing_key") // Non-empty value preserved
+    expect(envContent).toMatch(/AUTH_SECRET="[a-f0-9]{64}"/) // New value generated
+    expect(envContent).toMatch(/NEW_SECRET="[a-f0-9]{64}"/) // New value generated
+    expect(envContent).toMatch(/EMPTY_VAR="[a-f0-9]{64}"/) // Empty value replaced
+  })
+
   it("overwrites existing variables with --force flag", () => {
     writeFileSync(testEnvPath, "AUTH_SECRET=existing_secret\nAPI_KEY=existing_key")
 
@@ -169,6 +190,24 @@ describe("generateVariables", () => {
     expect(envContent).toBe("AUTH_SECRET=existing_secret")
   })
 
+  it("dry run shows empty values would be overwritten", () => {
+    writeFileSync(testEnvPath, 'AUTH_SECRET=""\nAPI_KEY=existing_key')
+
+    const result = generateVariables({
+      envPath: testEnvPath,
+      variables: ["AUTH_SECRET", "NEW_SECRET"],
+      dryRun: true,
+    })
+
+    expect(result.bootstrapped).toBe(false)
+    expect(result.missingCount).toBe(2) // Both AUTH_SECRET and NEW_SECRET would be generated
+    expect(result.missingKeys).toEqual(["AUTH_SECRET", "NEW_SECRET"])
+
+    // File should not be modified in dry run
+    const envContent = readFileSync(testEnvPath, "utf8")
+    expect(envContent).toBe('AUTH_SECRET=""\nAPI_KEY=existing_key')
+  })
+
   it("dry run with force shows all variables would be generated", () => {
     writeFileSync(testEnvPath, "AUTH_SECRET=existing_secret")
 
@@ -193,7 +232,7 @@ describe("generateVariables", () => {
 
     const result = generateVariables({
       envPath: testEnvPath,
-      variables: ["AUTH_SECRET"], // This already exists
+      variables: ["AUTH_SECRET"], // This already exists with non-empty value
     })
 
     expect(result.bootstrapped).toBe(false)
